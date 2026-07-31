@@ -41,6 +41,19 @@
                 padding: 10pt
             }
 
+            #watermark
+            {
+                position:fixed;
+                bottom: 50%;
+                left: 20%;
+                opacity: 0.3;
+                z-index: 99;
+                color: black;
+                font-size: 36pt;
+                font-weight: bold;
+                transform: rotate(-45deg);
+            }
+
         </style>
         <script>
             function clicked(elem, value) {
@@ -76,6 +89,8 @@
     </head>
     
     <body>
+
+        <span id="watermark">DRAFT – WORK IN PROGRESS</span>
 
         <!-- <button onclick="window.print()">Print</button> -->
 
