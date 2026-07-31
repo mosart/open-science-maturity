@@ -1,0 +1,290 @@
+<html>
+    <head>
+        <!-- <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css"> -->
+        <link rel="stylesheet" href="oat.min.css">
+        <style>
+            body {
+                --warning: orange;
+                margin: 20pt;
+            }
+
+            h2 {
+                font-size: x-large;
+                margin-left: 20pt;
+                margin-bottom: 8pt;
+            }
+
+            h3 {
+                font-size: medium;
+                margin-bottom: 0pt;
+            }
+
+            section>p {
+                margin-left: 24pt;
+                margin-bottom: 6pt;
+            }
+            
+            meter {
+                margin-left: auto;
+                width: 60%;
+            }
+
+            div.row {
+                 padding-right: 24pt;
+            }
+
+            section {
+                margin-top: 24pt;
+            }
+
+            summary {
+                padding: 10pt
+            }
+
+        </style>
+        <script>
+            function clicked(elem, value) {
+                elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute('value', value);
+                Array.from(elem.parentElement.children).forEach((el) => el.removeAttribute('style'));
+                elem.setAttribute('style', 'border: 1pt solid orange;');
+            }
+
+            function download_results() {
+                summaries = Array.from(document.querySelectorAll('summary'));
+                data = summaries.map(summary => {
+                    return {
+                        subprinciple: summary.querySelector("h3").innerHTML,
+                        value: summary.querySelector("meter").value
+                    }
+                })
+                console.log(data)
+                json = JSON.stringify(data)
+
+                const blob = new Blob([json],{ type: "application/json" })
+                const link = document.createElement("a")
+                link.href = URL.createObjectURL(blob)
+                link.download = "results.json"
+                link.style.display = "none"
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+            }
+
+            window.addEventListener("beforeprint", () => Array.from(document.getElementsByTagName("details")).forEach((el) => el.removeAttribute("open")));
+
+        </script>
+    </head>
+    
+    <body>
+
+        <!-- <button onclick="window.print()">Print</button> -->
+
+        <main>
+            <h1>Maturity assessment for Open Science infrastructure</h1>
+
+            <p>Based on the values and principles collated in the SPII project.</p>
+
+            <!-- <details open class="container" name="subprinciple">
+                <summary>
+                    <h3>Subprinciple</h3>
+                    <meter id="subprinciple-meter" value="3" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                </summary>
+                <p>Explanatory text</p>
+                <div class="row">
+                    <article class="card col-3" onclick="clicked(this, 1)">
+                        <h4>Maturity level 1</h4>
+                        <p>...</p>
+                    </article>
+                    <article class="card col-3" onclick="clicked(this, 2)">
+                        <h4>Maturity level 2</h4>
+                        <p>...</p>
+                    </article>
+                    <article class="card col-3" onclick="clicked(this, 3)">
+                        <h4>Maturity level 3</h4>
+                        <p>...</p>
+                    </article>
+                    <article class="card col-3" onclick="clicked(this, 4)">
+                        <h4>Maturity level 4</h4>
+                        <p>...</p>
+                    </article>
+                </div>
+            </details> -->
+
+            <section>
+
+                <h2>Open</h2>
+
+                <p>The most crucial principle for Open Science infrastructures.</p>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Results available</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Results refers to any output created by the infrastructure itself (the software running the infrastructure) or stored in it (e.g. datasets, content).</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>Results not available</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>FAIR results</h4>
+                            <p>All results are adhering fully to the FAIR principles.</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Transparent processes</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>Maturity level 4</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Innovative</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>At a stand still</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>Ad-hoc improvements</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>Continously innovating</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+            </section>
+        
+            <section>
+
+                <h2>Sustainable</h2>
+
+                <p>Keeping the lights on.</p>
+        
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Financially secure</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>Unfunded</h4>
+                            <p>There is no funding at the moment and for the forseeable future.</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>Time-limited funding</h4>
+                            <p>There is time-limited funding, e.g. through a one-off grant or donation.</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Recurrent commitment</h4>
+                            <p>There is for a number of years funding, e.g. through memberships and recurrent grants.</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>Structually funded</h4>
+                            <p></p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Human capacity available</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>Zombie infrastructure</h4>
+                            <p>No one is working on this infrastructure for a forseeable time.</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>One-person show</h4>
+                            <p>One hero is keeping the lights on, but there is no backup.</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Somewhat staffed</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>Dedicated resourcing</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Legal and policy compliant</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3" onclick="clicked(this, 1)">
+                            <h4>Unknown</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 2)">
+                            <h4>Major gaps</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 3)">
+                            <h4>Bases covered</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3" onclick="clicked(this, 4)">
+                            <h4>Audited or certified</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+            </section>
+        
+        </main>
+
+        <button onclick="download_results()">Download results</button>
+
+    </body>
+</html>
