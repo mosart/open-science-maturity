@@ -63,6 +63,8 @@
             }
 
         </style>
+        <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+        <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
         <script>
             function clicked(elem, value) {
                 elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute("value", value);
@@ -89,6 +91,19 @@
                 document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)
+            }
+
+            function download_pdf() {
+
+                    // Default export is a4 paper, portrait, using millimeters for units
+                    const doc = new jspdf.jsPDF();
+
+                    doc.html(document.body, {
+                        callback: (doc) => doc.save("report.pdf"),
+                        x: 10,
+                        width: 200,
+                        windowWidth: 1000
+                    });
             }
 
             window.addEventListener("beforeprint", () => Array.from(document.getElementsByTagName("details")).forEach((el) => el.removeAttribute("open")));
@@ -305,6 +320,7 @@
         </main>
 
         <button onclick="download_json()">Download results as JSON</button>
+        <button onclick="download_pdf()">Download report</button>
 
         <script>
             Array.from(document.getElementsByClassName("level-1")).forEach((el) => {
