@@ -57,6 +57,12 @@
             }
 
             @media print {
+                .value {
+                    display: none;
+                }
+                button {
+                    display: none;
+                }
                 meter {
                     print-color-adjust: exact !important;
                 }
@@ -115,7 +121,7 @@
         <!-- <span id="watermark">DRAFT – WORK IN PROGRESS</span> -->
    
         <main id="main">
-            <h1>Maturity assessment for Open Science infrastructure</h1>
+            <h1>Open Science maturity assessment for <input type="text" placeholder="name of the infrastructure" style="display: inline-block; width: 100pt;"/></h1>
 
             <p>Based on the values and principles collated in the SPII project.</p>
 
@@ -144,6 +150,21 @@
                     </article>
                 </div>
             </details> -->
+            
+            <section class="row">
+                <article class="card col-4 value">
+                    <h4>Integrity and Quality</h4>
+                    <p>...</p>
+                </article>
+                <article class="card col-4 value">
+                    <h4>Collective benefit</h4>
+                    <p>...</p>
+                </article>
+                <article class="card col-4 value">
+                    <h4>Academic freedom and inclusivity</h4>
+                    <p>...</p>
+                </article>
+            </section>
 
             <section>
 
@@ -230,7 +251,93 @@
                 </details>
 
             </section>
+
+            <section>
+
+                <h2>Autonomy</h2>
+
+                <p>Who is calling the shots.</p>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Community governed</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Maturity level 4</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
         
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Clear responsibilities</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Maturity level 4</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Vendor independent</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Check for example the <a href="https://utrechtuniversity.github.io/digital-autonomy-assessment-tool/">Digital Autonomy Assessment Framework</a></p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Maturity level 4</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+            </section>
+
             <section>
 
                 <h2>Sustainable</h2>
@@ -310,6 +417,118 @@
                         </article>
                         <article class="card col-3 level-4">
                             <h4>Audited or certified</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Resilient</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Falls over at the first breeze</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Major gaps</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Bases covered</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Can weather a hurricane</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+            </section>
+
+            <section>
+
+                <h2>Usable</h2>
+
+                <p>Providing a good user experience and letting researchers achieve their goals.</p>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Interconnected</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Isolated system</h4>
+                            <p>This infrastructure has non integrations with others, and makes it difficult to even exchange data.</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Uses other systems</h4>
+                            <p>Ingest e.g. data from other systems.</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Two-way connected</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Part of flourishing ecosystem</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Seamless user-experience</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Maturity level 4</h4>
+                            <p>...</p>
+                        </article>
+                    </div>
+                </details>
+
+                <details class="container" name="subprinciple">
+                    <summary>
+                        <h3>Accessible to all</h3>
+                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    </summary>
+                    <p>Explanatory text</p>
+                    <div class="row">
+                        <article class="card col-3 level-1">
+                            <h4>Maturity level 1</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-2">
+                            <h4>Maturity level 2</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-3">
+                            <h4>Maturity level 3</h4>
+                            <p>...</p>
+                        </article>
+                        <article class="card col-3 level-4">
+                            <h4>Maturity level 4</h4>
                             <p>...</p>
                         </article>
                     </div>
