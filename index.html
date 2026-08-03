@@ -76,6 +76,15 @@
                 elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute("value", value);
                 Array.from(elem.parentElement.children).forEach((el) => el.removeAttribute('style'));
                 elem.setAttribute('style', 'border: 1pt solid orange;');
+                update_score()
+            }
+
+            function update_score() {
+                meters = Array.from(document.querySelectorAll("summary>meter"))
+                overall = meters.reduce((sum, el) => sum + el.value, 0)/meters.filter(el => el.value > 0).length
+                document.getElementById("overall-score").innerHTML = overall.toFixed(1)
+                document.getElementById("overall-meter").setAttribute("value", overall)
+
             }
 
             function download_json() {
@@ -152,18 +161,25 @@
             </details> -->
             
             <section class="row">
-                <article class="card col-4 value">
+                <article class="card col-3 value">
                     <h4>Integrity and Quality</h4>
                     <p>...</p>
                 </article>
-                <article class="card col-4 value">
+                <article class="card col-3 value">
                     <h4>Collective benefit</h4>
                     <p>...</p>
                 </article>
-                <article class="card col-4 value">
+                <article class="card col-3 value">
                     <h4>Academic freedom and inclusivity</h4>
                     <p>...</p>
                 </article>
+
+                <article class="card col-3">
+                    <h4>Overall score</h4>
+                    <meter id="overall-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    <strong id="overall-score">0</strong>
+                </article>
+
             </section>
 
             <section>
