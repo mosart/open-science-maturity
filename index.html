@@ -6,6 +6,7 @@
         <style>
             body {
                 --warning: orange;
+                --success: #4CAF50;
                 margin: 20pt;
             }
 
@@ -24,7 +25,7 @@
                 margin-left: 24pt;
                 margin-bottom: 6pt;
             }
-            
+
             meter {
                 margin-left: auto;
                 width: 60%;
@@ -61,29 +62,15 @@
                 }
             }
 
-            @media (max-width: 768px) {
-                .row {
-                --grid-cols: 4;
-                --grid-gap: 1rem;
-                }
-                .col, [class*="col-"] {
-                --span: 4;
-                }
-                [class*="offset-"] {
-                --offset: 0;
-                margin-inline-start: 0;
-                }
-            }
-
         </style>
         <script>
             function clicked(elem, value) {
-                elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute('value', value);
+                elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute("value", value);
                 Array.from(elem.parentElement.children).forEach((el) => el.removeAttribute('style'));
                 elem.setAttribute('style', 'border: 1pt solid orange;');
             }
 
-            function download_results() {
+            function download_json() {
                 summaries = Array.from(document.querySelectorAll('summary'));
                 data = summaries.map(summary => {
                     return {
@@ -105,17 +92,14 @@
             }
 
             window.addEventListener("beforeprint", () => Array.from(document.getElementsByTagName("details")).forEach((el) => el.removeAttribute("open")));
-
         </script>
     </head>
     
     <body>
 
-        <span id="watermark">DRAFT – WORK IN PROGRESS</span>
-
-        <!-- <button onclick="window.print()">Print</button> -->
-
-        <main>
+        <!-- <span id="watermark">DRAFT – WORK IN PROGRESS</span> -->
+   
+        <main id="main">
             <h1>Maturity assessment for Open Science infrastructure</h1>
 
             <p>Based on the values and principles collated in the SPII project.</p>
@@ -123,23 +107,23 @@
             <!-- <details open class="container" name="subprinciple">
                 <summary>
                     <h3>Subprinciple</h3>
-                    <meter id="subprinciple-meter" value="3" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
+                    <meter id="subprinciple-meter" value="4" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
                 </summary>
                 <p>Explanatory text</p>
                 <div class="row">
-                    <article class="card col-3" onmousedown="clicked(this, 1)">
+                    <article class="card col-3 level-1">
                         <h4>Maturity level 1</h4>
                         <p>...</p>
                     </article>
-                    <article class="card col-3" onmousedown="clicked(this, 2)">
+                    <article class="card col-3 level-2">
                         <h4>Maturity level 2</h4>
                         <p>...</p>
                     </article>
-                    <article class="card col-3" onmousedown="clicked(this, 3)">
+                    <article class="card col-3 level-3">
                         <h4>Maturity level 3</h4>
                         <p>...</p>
                     </article>
-                    <article class="card col-3" onmousedown="clicked(this, 4)">
+                    <article class="card col-3 level-4">
                         <h4>Maturity level 4</h4>
                         <p>...</p>
                     </article>
@@ -154,24 +138,24 @@
 
                 <details class="container" name="subprinciple">
                     <summary>
-                        <h3>Results available</h3>
+                        <h3>Results openly available</h3>
                         <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
                     </summary>
                     <p>Results refers to any output created by the infrastructure itself (the software running the infrastructure) or stored in it (e.g. datasets, content).</p>
                     <div class="row">
-                        <article class="card col-3" ontouchstart="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>Results not available</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" ontouchstart="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>Metadata about results available</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" ontouchstart="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Results openly available</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" ontouchstart="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>FAIR results</h4>
                             <p>All results are adhering fully to the FAIR principles.</p>
                         </article>
@@ -185,19 +169,19 @@
                     </summary>
                     <p>Explanatory text</p>
                     <div class="row">
-                        <article class="card col-3" onmousedown="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>Maturity level 1</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>Maturity level 2</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Maturity level 3</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>Maturity level 4</h4>
                             <p>...</p>
                         </article>
@@ -211,19 +195,19 @@
                     </summary>
                     <p>Explanatory text</p>
                     <div class="row">
-                        <article class="card col-3" onmousedown="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>At a stand still</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>Ad-hoc improvements</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Maturity level 3</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>Continously innovating</h4>
                             <p>...</p>
                         </article>
@@ -245,19 +229,19 @@
                     </summary>
                     <p>Explanatory text</p>
                     <div class="row">
-                        <article class="card col-3" onmousedown="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>Unfunded</h4>
                             <p>There is no funding at the moment and for the forseeable future.</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>Time-limited funding</h4>
                             <p>There is time-limited funding, e.g. through a one-off grant or donation.</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Recurrent commitment</h4>
                             <p>There is for a number of years funding, e.g. through memberships and recurrent grants.</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>Structually funded</h4>
                             <p></p>
                         </article>
@@ -271,19 +255,19 @@
                     </summary>
                     <p>Explanatory text</p>
                     <div class="row">
-                        <article class="card col-3" onmousedown="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>Zombie infrastructure</h4>
                             <p>No one is working on this infrastructure for a forseeable time.</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>One-person show</h4>
                             <p>One hero is keeping the lights on, but there is no backup.</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Somewhat staffed</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>Dedicated resourcing</h4>
                             <p>...</p>
                         </article>
@@ -297,19 +281,19 @@
                     </summary>
                     <p>Explanatory text</p>
                     <div class="row">
-                        <article class="card col-3" onmousedown="clicked(this, 1)">
+                        <article class="card col-3 level-1">
                             <h4>Unknown</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 2)">
+                        <article class="card col-3 level-2">
                             <h4>Major gaps</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 3)">
+                        <article class="card col-3 level-3">
                             <h4>Bases covered</h4>
                             <p>...</p>
                         </article>
-                        <article class="card col-3" onmousedown="clicked(this, 4)">
+                        <article class="card col-3 level-4">
                             <h4>Audited or certified</h4>
                             <p>...</p>
                         </article>
@@ -320,7 +304,21 @@
         
         </main>
 
-        <button onclick="download_results()">Download results</button>
+        <button onclick="download_json()">Download results as JSON</button>
 
+        <script>
+            Array.from(document.getElementsByClassName("level-1")).forEach((el) => {
+                el.addEventListener("click", () => clicked(el, 1)); el.addEventListener("touchstart", () => clicked(el, 1));
+            })
+            Array.from(document.getElementsByClassName("level-2")).forEach((el) => {
+                el.addEventListener("click", () => clicked(el, 2)); el.addEventListener("touchstart", () => clicked(el, 2));
+            })
+            Array.from(document.getElementsByClassName("level-3")).forEach((el) => {
+                el.addEventListener("click", () => clicked(el, 3)); el.addEventListener("touchstart", () => clicked(el, 3));
+            })
+            Array.from(document.getElementsByClassName("level-4")).forEach((el) => {
+                el.addEventListener("click", () => clicked(el, 4)); el.addEventListener("touchstart", () => clicked(el, 4));
+            })
+        </script>
     </body>
 </html>
