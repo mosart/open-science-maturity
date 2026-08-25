@@ -250,9 +250,11 @@
                 app.appendChild(render_summary_section());
                 app.appendChild(render_classify_section());
                 POSI.forEach((section) => app.appendChild(render_posi_section(section)));
+                app.appendChild(render_badge_section());
                 app.appendChild(render_actions_section());
                 wire_up_events(app);
                 update_summary();
+                update_badge();
             }
 
             function render_header() {
@@ -395,6 +397,7 @@
                 const nameInput = document.getElementById("infra-name");
                 nameInput.addEventListener("input", (e) => {
                     state.name = e.target.value;
+                    update_badge();
                 });
 
                 document.getElementById("classify-section").addEventListener("change", (e) => {
@@ -433,6 +436,7 @@
                     card.classList.toggle("selected", card.dataset.status === state.posi[principleId].status);
                 });
                 update_summary();
+                update_badge();
             }
 
             function update_summary() {
@@ -515,6 +519,129 @@
             window.addEventListener("beforeprint", () => {
                 document.querySelectorAll("details").forEach((el) => el.removeAttribute("open"));
             });
+
+            const RING_CONFIG = [
+                { section: "Governance", radius: 34 },
+                { section: "Sustainability", radius: 48 },
+                { section: "Insurance", radius: 62 },
+            ];
+
+            const STATUS_COLOR_VAR = {
+                compliant: "--compliant",
+                progress: "--warning",
+                "non-compliant": "--destructive",
+            };
+
+            function status_color(status) {
+                const varName = STATUS_COLOR_VAR[status];
+                if (!varName) return "#cccccc";
+                const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+                return value || "#cccccc";
+            }
+
+            function escape_xml(str) {
+                return str
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+
+            function build_badge_svg_markup(state) {
+                const size = 200;
+                const center = size / 2;
+                const strokeWidth = 10;
+                let circles = "";
+                RING_CONFIG.forEach((ring) => {
+                    const section = POSI.find((s) => s.section === ring.section);
+                    const offsets = ring_segment_offsets(ring.radius, section.principles.length);
+                    section.principles.forEach((principle, i) => {
+                        const status = state.posi[principle.id].status;
+                        const color = status_color(status);
+                        const off = offsets[i];
+                        circles +=
+                            '<circle cx="' + center + '" cy="' + center + '" r="' + ring.radius +
+                            '" fill="none" stroke="' + color + '" stroke-width="' + strokeWidth +
+                            '" stroke-dasharray="' + off.dasharray + '" stroke-dashoffset="' + off.dashoffset +
+                            '" transform="rotate(-90 ' + center + " " + center + ')" />';
+                    });
+                });
+                const summary = compute_summary(state);
+                const name = escape_xml(state.name || "Unnamed infrastructure");
+                return (
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + " " + size + '" width="' + size + '" height="' + size + '">' +
+                    '<rect width="' + size + '" height="' + size + '" fill="white" />' +
+                    circles +
+                    '<text x="' + center + '" y="' + (center - 4) + '" text-anchor="middle" font-size="22" font-family="Source Sans 3, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
+                    '<text x="' + center + '" y="' + (center + 14) + '" text-anchor="middle" font-size="8" font-family="Source Sans 3, sans-serif">' + name + "</text>" +
+                    "</svg>"
+                );
+            }
+
+            function update_badge() {
+                const container = document.getElementById("badge-preview");
+                if (!container) return;
+                container.innerHTML = build_badge_svg_markup(state);
+            }
+
+            function render_badge_section() {
+                const section = document.createElement("section");
+                section.id = "badge-section";
+                const h2 = document.createElement("h2");
+                h2.textContent = "Certification badge";
+                section.appendChild(h2);
+
+                const preview = document.createElement("div");
+                preview.id = "badge-preview";
+                section.appendChild(preview);
+
+                const svgBtn = document.createElement("button");
+                svgBtn.textContent = "Download badge (SVG)";
+                svgBtn.addEventListener("click", download_badge_svg);
+                section.appendChild(svgBtn);
+
+                const pngBtn = document.createElement("button");
+                pngBtn.textContent = "Download badge (PNG)";
+                pngBtn.addEventListener("click", download_badge_png);
+                section.appendChild(pngBtn);
+
+                return section;
+            }
+
+            function trigger_download(href, filename) {
+                const link = document.createElement("a");
+                link.href = href;
+                link.download = filename;
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function download_badge_svg() {
+                const markup = build_badge_svg_markup(state);
+                const blob = new Blob([markup], { type: "image/svg+xml" });
+                trigger_download(URL.createObjectURL(blob), "badge.svg");
+            }
+
+            function download_badge_png() {
+                const markup = build_badge_svg_markup(state);
+                const svgBlob = new Blob([markup], { type: "image/svg+xml" });
+                const url = URL.createObjectURL(svgBlob);
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 200;
+                    canvas.height = 200;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    canvas.toBlob((blob) => {
+                        trigger_download(URL.createObjectURL(blob), "badge.png");
+                    });
+                };
+                img.src = url;
+            }
 
             render();
         </script>
