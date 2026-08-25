@@ -115,58 +115,6 @@
         </style>
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-        <script>
-            function clicked(elem, value) {
-                elem.parentElement.parentElement.getElementsByTagName('meter').item(0).setAttribute("value", value);
-                Array.from(elem.parentElement.children).forEach((el) => el.removeAttribute('style'));
-                elem.setAttribute('style', 'border: 1pt solid orange;');
-                update_score()
-            }
-
-            function update_score() {
-                meters = Array.from(document.querySelectorAll("summary>meter"))
-                overall = meters.reduce((sum, el) => sum + el.value, 0)/meters.filter(el => el.value > 0).length
-                document.getElementById("overall-score").innerHTML = overall.toFixed(1)
-                document.getElementById("overall-meter").setAttribute("value", overall)
-
-            }
-
-            function download_json() {
-                summaries = Array.from(document.querySelectorAll('summary'));
-                data = summaries.map(summary => {
-                    return {
-                        subprinciple: summary.querySelector("h3").innerHTML,
-                        value: summary.querySelector("meter").value
-                    }
-                })
-                console.log(data)
-                json = JSON.stringify(data)
-
-                const blob = new Blob([json],{ type: "application/json" })
-                const link = document.createElement("a")
-                link.href = URL.createObjectURL(blob)
-                link.download = "results.json"
-                link.style.display = "none"
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-            }
-
-            function download_pdf() {
-
-                    // Default export is a4 paper, portrait, using millimeters for units
-                    const doc = new jspdf.jsPDF();
-
-                    doc.html(document.body, {
-                        callback: (doc) => doc.save("report.pdf"),
-                        x: 10,
-                        width: 200,
-                        windowWidth: 1000
-                    });
-            }
-
-            window.addEventListener("beforeprint", () => Array.from(document.getElementsByTagName("details")).forEach((el) => el.removeAttribute("open")));
-        </script>
         <script id="app-logic">
             const ACTIVITIES = [
                 "Manage & Organise",
