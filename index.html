@@ -125,7 +125,7 @@
             window.addEventListener("beforeprint", () => Array.from(document.getElementsByTagName("details")).forEach((el) => el.removeAttribute("open")));
         </script>
         <script id="app-logic">
-            globalThis.ACTIVITIES = [
+            const ACTIVITIES = [
                 "Manage & Organise",
                 { group: "Research Lifecycle", items: ["Discover", "Hypothesise", "Plan", "Collect", "Process", "Analyse", "Report"] },
                 "Document & Preserve",
@@ -134,7 +134,7 @@
                 "Evaluate & Monitor",
             ];
 
-            globalThis.POSI = [
+            const POSI = [
                 {
                     section: "Governance",
                     sourceUrl: "https://openscholarlyinfrastructure.org/#governance",
@@ -241,7 +241,6 @@
                 return offsets;
             }
         </script>
-</script></script>
     </head>
     
     <body>
