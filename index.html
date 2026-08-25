@@ -22,6 +22,12 @@
                     --destructive: rgba(248,113,113,1);
                     --compliant: rgba(16,185,129,1);
                 }
+                a {
+                    color: rgba(147,197,253,1);
+                }
+                .status-card:focus-visible {
+                    outline-color: rgba(147,197,253,1);
+                }
             }
 
             body {
@@ -72,7 +78,10 @@
             .status-card.selected[data-status="progress"] { border-color: var(--warning); }
             .status-card.selected[data-status="non-compliant"] { border-color: var(--destructive); }
 
-            .status-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+            .status-card:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: 2px;
+            }
 
             textarea.notes {
                 width: 100%;
@@ -116,6 +125,15 @@
                 #badge-section button {
                     display: none;
                 }
+                .status-card:not(.selected) {
+                    display: none;
+                }
+            }
+
+            body.printing #actions,
+            body.printing #badge-section button,
+            body.printing .status-card:not(.selected) {
+                display: none;
             }
         </style>
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
@@ -257,7 +275,7 @@
                 POSI.forEach((section) => app.appendChild(render_posi_section(section)));
                 app.appendChild(render_badge_section());
                 app.appendChild(render_actions_section());
-                wire_up_events(app);
+                wire_up_events();
                 update_summary();
                 update_badge();
             }
@@ -371,7 +389,7 @@
 
                 const cards = document.createElement("div");
                 cards.className = "status-cards";
-                cards.setAttribute("role", "radiogroup");
+                cards.setAttribute("role", "group");
                 cards.setAttribute("aria-label", principle.title + " maturity status");
                 [
                     { status: "compliant", label: "Compliant" },
@@ -381,9 +399,9 @@
                     const card = document.createElement("article");
                     card.className = "card col-3 status-card";
                     card.dataset.status = option.status;
-                    card.setAttribute("role", "radio");
+                    card.setAttribute("role", "button");
                     card.setAttribute("tabindex", "0");
-                    card.setAttribute("aria-checked", state.posi[principle.id].status === option.status ? "true" : "false");
+                    card.setAttribute("aria-pressed", state.posi[principle.id].status === option.status ? "true" : "false");
                     if (state.posi[principle.id].status === option.status) {
                         card.classList.add("selected");
                     }
@@ -403,7 +421,7 @@
                 return details;
             }
 
-            function wire_up_events(app) {
+            function wire_up_events() {
                 const nameInput = document.getElementById("infra-name");
                 nameInput.addEventListener("input", (e) => {
                     state.name = e.target.value;
@@ -431,7 +449,7 @@
                 details.querySelectorAll(".status-card").forEach((card) => {
                     const isSelected = card.dataset.status === state.posi[principleId].status;
                     card.classList.toggle("selected", isSelected);
-                    card.setAttribute("aria-checked", isSelected ? "true" : "false");
+                    card.setAttribute("aria-pressed", isSelected ? "true" : "false");
                 });
                 update_summary();
                 update_badge();
@@ -506,17 +524,41 @@
             }
 
             function download_pdf() {
+                const detailsElements = Array.from(document.querySelectorAll("details"));
+                const openStates = detailsElements.map((el) => el.open);
+                detailsElements.forEach((el) => el.setAttribute("open", ""));
+                document.body.classList.add("printing");
+
                 const doc = new jspdf.jsPDF();
                 doc.html(document.body, {
-                    callback: (doc) => doc.save("report.pdf"),
+                    callback: (doc) => {
+                        doc.save("report.pdf");
+                        document.body.classList.remove("printing");
+                        detailsElements.forEach((el, i) => {
+                            if (!openStates[i]) el.removeAttribute("open");
+                        });
+                    },
                     x: 10,
                     width: 200,
                     windowWidth: 1000,
                 });
             }
 
+            let detailsOpenBeforePrint = null;
+
             window.addEventListener("beforeprint", () => {
-                document.querySelectorAll("details").forEach((el) => el.setAttribute("open", ""));
+                const detailsElements = Array.from(document.querySelectorAll("details"));
+                detailsOpenBeforePrint = detailsElements.map((el) => el.open);
+                detailsElements.forEach((el) => el.setAttribute("open", ""));
+            });
+
+            window.addEventListener("afterprint", () => {
+                if (!detailsOpenBeforePrint) return;
+                const detailsElements = Array.from(document.querySelectorAll("details"));
+                detailsElements.forEach((el, i) => {
+                    if (!detailsOpenBeforePrint[i]) el.removeAttribute("open");
+                });
+                detailsOpenBeforePrint = null;
             });
 
             const RING_CONFIG = [
@@ -638,10 +680,17 @@
                     ctx.drawImage(img, 0, 0);
                     URL.revokeObjectURL(url);
                     canvas.toBlob((blob) => {
+                        if (!blob) {
+                            alert("Could not generate the badge image.");
+                            return;
+                        }
                         trigger_download(URL.createObjectURL(blob), "badge.png");
                     });
                 };
-                img.onerror = () => alert("Could not generate the badge image.");
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    alert("Could not generate the badge image.");
+                };
                 img.src = url;
             }
 
