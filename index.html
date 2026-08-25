@@ -250,6 +250,7 @@
                 app.appendChild(render_summary_section());
                 app.appendChild(render_classify_section());
                 POSI.forEach((section) => app.appendChild(render_posi_section(section)));
+                app.appendChild(render_actions_section());
                 wire_up_events(app);
                 update_summary();
             }
@@ -440,6 +441,60 @@
                 document.getElementById("summary-counts").textContent =
                     summary.compliant + " compliant · " + summary.progress + " making progress · " +
                     summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+            }
+
+            function render_actions_section() {
+                const section = document.createElement("section");
+                section.id = "actions";
+
+                const downloadJsonBtn = document.createElement("button");
+                downloadJsonBtn.textContent = "Download results as JSON";
+                downloadJsonBtn.addEventListener("click", download_json);
+                section.appendChild(downloadJsonBtn);
+
+                const loadJsonLabel = document.createElement("label");
+                loadJsonLabel.textContent = "Load JSON: ";
+                const loadJsonInput = document.createElement("input");
+                loadJsonInput.type = "file";
+                loadJsonInput.id = "load-json-input";
+                loadJsonInput.accept = "application/json";
+                loadJsonInput.addEventListener("change", (e) => {
+                    const file = e.target.files[0];
+                    if (file) load_json(file);
+                });
+                loadJsonLabel.appendChild(loadJsonInput);
+                section.appendChild(loadJsonLabel);
+
+                return section;
+            }
+
+            function download_json() {
+                const data = build_export_object(state);
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: "application/json" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "results.json";
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function load_json(file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    let parsed;
+                    try {
+                        parsed = JSON.parse(reader.result);
+                    } catch (err) {
+                        alert("That file is not valid JSON.");
+                        return;
+                    }
+                    state = merge_loaded_state(parsed);
+                    render();
+                };
+                reader.readAsText(file);
             }
 
             render();
