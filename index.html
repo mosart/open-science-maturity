@@ -5,10 +5,25 @@
         <!-- <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css"> -->
         <link rel="stylesheet" href="oat.min.css">
         <style>
+            :root {
+                --primary: rgba(6,75,203,1);
+                --warning: rgba(202,138,4,1);
+                --destructive: rgba(185,28,28,1);
+                --compliant: rgba(13,148,136,1);
+                --font-sans: "Source Sans 3", sans-serif;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --primary: rgba(5,62,170,1);
+                    --warning: rgba(250,204,21,1);
+                    --destructive: rgba(248,113,113,1);
+                    --compliant: rgba(16,185,129,1);
+                }
+            }
+
             body {
-                --warning: orange;
-                --success: #4CAF50;
                 margin: 20pt;
+                font-family: var(--font-sans);
             }
 
             h2 {
@@ -22,18 +37,13 @@
                 margin-bottom: 0pt;
             }
 
-            section>p {
+            section > p {
                 margin-left: 24pt;
                 margin-bottom: 6pt;
             }
 
-            meter {
-                margin-left: auto;
-                width: 60%;
-            }
-
             div.row {
-                 padding-right: 24pt;
+                padding-right: 24pt;
             }
 
             section {
@@ -41,12 +51,49 @@
             }
 
             summary {
-                padding: 10pt
+                padding: 10pt;
             }
 
-            #watermark
-            {
-                position:fixed;
+            .status-cards {
+                display: flex;
+                gap: 8pt;
+                padding-right: 24pt;
+            }
+
+            .status-card {
+                cursor: pointer;
+                border: 1pt solid transparent;
+            }
+
+            .status-card.selected[data-status="compliant"] { border-color: var(--compliant); }
+            .status-card.selected[data-status="progress"] { border-color: var(--warning); }
+            .status-card.selected[data-status="non-compliant"] { border-color: var(--destructive); }
+
+            textarea.notes {
+                width: 100%;
+                min-height: 40pt;
+                margin-top: 6pt;
+                font-family: var(--font-sans);
+            }
+
+            #summary-section {
+                display: flex;
+                align-items: baseline;
+                gap: 24pt;
+                margin-left: 20pt;
+            }
+
+            #summary-heading {
+                font-size: large;
+                color: var(--primary);
+            }
+
+            .taxonomy-group {
+                margin-left: 16pt;
+            }
+
+            #watermark {
+                position: fixed;
                 bottom: 50%;
                 left: 20%;
                 opacity: 0.3;
@@ -58,17 +105,13 @@
             }
 
             @media print {
-                .value {
+                #actions {
                     display: none;
                 }
-                button {
+                .status-cards {
                     display: none;
-                }
-                meter {
-                    print-color-adjust: exact !important;
                 }
             }
-
         </style>
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -246,448 +289,212 @@
     <body>
 
         <span id="watermark">DRAFT – WORK IN PROGRESS</span>
-   
-        <main id="main">
-            <h1>Open Science maturity assessment for <input type="text" placeholder="name of the infrastructure" style="display: inline-block; width: 100pt;"/></h1>
 
-            <p>Based on the values and principles collated in the SPII project.</p>
+        <main id="app"></main>
 
-            <!-- <details open class="container" name="subprinciple">
-                <summary>
-                    <h3>Subprinciple</h3>
-                    <meter id="subprinciple-meter" value="4" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                </summary>
-                <p>Explanatory text</p>
-                <div class="row">
-                    <article class="card col-3 level-1">
-                        <h4>Maturity level 1</h4>
-                        <p>...</p>
-                    </article>
-                    <article class="card col-3 level-2">
-                        <h4>Maturity level 2</h4>
-                        <p>...</p>
-                    </article>
-                    <article class="card col-3 level-3">
-                        <h4>Maturity level 3</h4>
-                        <p>...</p>
-                    </article>
-                    <article class="card col-3 level-4">
-                        <h4>Maturity level 4</h4>
-                        <p>...</p>
-                    </article>
-                </div>
-            </details> -->
-            
-            <section class="row">
-                <article class="card col-3 value">
-                    <h4>Integrity and Quality</h4>
-                    <p>...</p>
-                </article>
-                <article class="card col-3 value">
-                    <h4>Collective benefit</h4>
-                    <p>...</p>
-                </article>
-                <article class="card col-3 value">
-                    <h4>Academic freedom and inclusivity</h4>
-                    <p>...</p>
-                </article>
+        <script id="app-render">
+            let state = initial_state();
 
-                <article class="card col-3">
-                    <h4>Overall score</h4>
-                    <meter id="overall-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    <strong id="overall-score">0</strong>
-                </article>
+            function render() {
+                const app = document.getElementById("app");
+                app.innerHTML = "";
+                app.appendChild(render_header());
+                app.appendChild(render_summary_section());
+                app.appendChild(render_classify_section());
+                POSI.forEach((section) => app.appendChild(render_posi_section(section)));
+                wire_up_events(app);
+                update_summary();
+            }
 
-            </section>
+            function render_header() {
+                const wrap = document.createElement("div");
+                const h1 = document.createElement("h1");
+                h1.appendChild(document.createTextNode("Open Science infrastructure self-assessment for "));
+                const nameInput = document.createElement("input");
+                nameInput.type = "text";
+                nameInput.id = "infra-name";
+                nameInput.placeholder = "name of the infrastructure";
+                nameInput.style.display = "inline-block";
+                nameInput.style.width = "200pt";
+                nameInput.value = state.name;
+                h1.appendChild(nameInput);
+                wrap.appendChild(h1);
 
-            <section>
+                const intro = document.createElement("p");
+                intro.innerHTML = 'Based on the <a href="https://openscholarlyinfrastructure.org/">Principles of Open Scholarly Infrastructure (POSI) v2.0</a>. Cite as: POSI Adopters (2025), The Principles of Open Scholarly Infrastructure, <a href="https://doi.org/10.14454/G8WV-VM65">https://doi.org/10.14454/G8WV-VM65</a>.';
+                wrap.appendChild(intro);
+                return wrap;
+            }
 
-                <h2>Openness</h2>
+            function render_summary_section() {
+                const section = document.createElement("section");
+                section.id = "summary-section";
+                const heading = document.createElement("strong");
+                heading.id = "summary-heading";
+                heading.textContent = "Overall: 0% compliant";
+                const counts = document.createElement("span");
+                counts.id = "summary-counts";
+                section.appendChild(heading);
+                section.appendChild(counts);
+                return section;
+            }
 
-                <p>The most crucial principle for Open Science infrastructures.</p>
+            function render_classify_section() {
+                const section = document.createElement("section");
+                section.id = "classify-section";
+                const h2 = document.createElement("h2");
+                h2.textContent = "Classify";
+                section.appendChild(h2);
+                const p = document.createElement("p");
+                p.textContent = "This infrastructure supports the following activities:";
+                section.appendChild(p);
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Results openly available</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Results refers to any output created by the infrastructure itself (the software running the infrastructure) or stored in it (e.g. datasets, content).</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Results not available</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Metadata about results available</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Results openly available</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>FAIR results</h4>
-                            <p>All results are adhering fully to the FAIR principles.</p>
-                        </article>
-                    </div>
-                </details>
+                const list = document.createElement("div");
+                ACTIVITIES.forEach((item) => {
+                    if (typeof item === "string") {
+                        list.appendChild(render_activity_checkbox(item, item));
+                    } else {
+                        const groupWrap = document.createElement("div");
+                        const groupLabel = document.createElement("strong");
+                        groupLabel.textContent = item.group;
+                        groupWrap.appendChild(groupLabel);
+                        const groupList = document.createElement("div");
+                        groupList.className = "taxonomy-group";
+                        item.items.forEach((sub) => {
+                            const value = item.group + " > " + sub;
+                            groupList.appendChild(render_activity_checkbox(value, sub));
+                        });
+                        groupWrap.appendChild(groupList);
+                        list.appendChild(groupWrap);
+                    }
+                });
+                section.appendChild(list);
+                return section;
+            }
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Transparent processes</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+            function render_activity_checkbox(value, labelText) {
+                const label = document.createElement("label");
+                label.style.display = "block";
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.value = value;
+                input.checked = state.activities.includes(value);
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(" " + labelText));
+                return label;
+            }
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Innovative</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>At a stand still</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Ad-hoc improvements</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Continously innovating</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+            function render_posi_section(section) {
+                const el = document.createElement("section");
+                const h2 = document.createElement("h2");
+                h2.textContent = section.section;
+                el.appendChild(h2);
+                const sourceNote = document.createElement("p");
+                sourceNote.innerHTML = 'Source: <a href="' + section.sourceUrl + '">' + section.sourceUrl + "</a>";
+                el.appendChild(sourceNote);
+                section.principles.forEach((principle) => {
+                    el.appendChild(render_principle(principle));
+                });
+                return el;
+            }
 
-            </section>
+            function render_principle(principle) {
+                const details = document.createElement("details");
+                details.className = "container";
+                details.dataset.principleId = principle.id;
 
-            <section>
+                const summary = document.createElement("summary");
+                const h3 = document.createElement("h3");
+                h3.textContent = principle.title;
+                summary.appendChild(h3);
+                details.appendChild(summary);
 
-                <h2>Autonomy</h2>
+                const text = document.createElement("p");
+                text.textContent = principle.text;
+                details.appendChild(text);
 
-                <p>Who is calling the shots.</p>
+                const cards = document.createElement("div");
+                cards.className = "status-cards";
+                [
+                    { status: "compliant", label: "Compliant" },
+                    { status: "progress", label: "Making progress" },
+                    { status: "non-compliant", label: "Not compliant" },
+                ].forEach((option) => {
+                    const card = document.createElement("article");
+                    card.className = "card col-3 status-card";
+                    card.dataset.status = option.status;
+                    if (state.posi[principle.id].status === option.status) {
+                        card.classList.add("selected");
+                    }
+                    const h4 = document.createElement("h4");
+                    h4.textContent = option.label;
+                    card.appendChild(h4);
+                    cards.appendChild(card);
+                });
+                details.appendChild(cards);
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Community governed</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
-        
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Clear responsibilities</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+                const notes = document.createElement("textarea");
+                notes.className = "notes";
+                notes.placeholder = "Explain your reasoning (optional)";
+                notes.value = state.posi[principle.id].notes;
+                details.appendChild(notes);
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Vendor independent</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Check for example the <a href="https://utrechtuniversity.github.io/digital-autonomy-assessment-tool/">Digital Autonomy Assessment Framework</a></p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+                return details;
+            }
 
-            </section>
+            function wire_up_events(app) {
+                const nameInput = document.getElementById("infra-name");
+                nameInput.addEventListener("input", (e) => {
+                    state.name = e.target.value;
+                });
 
-            <section>
+                document.getElementById("classify-section").addEventListener("change", (e) => {
+                    if (e.target.matches('input[type="checkbox"]')) {
+                        toggle_activity(e.target.value, e.target.checked);
+                    }
+                });
 
-                <h2>Sustainability</h2>
+                app.addEventListener("click", (e) => {
+                    const card = e.target.closest(".status-card");
+                    if (!card) return;
+                    const details = card.closest("[data-principle-id]");
+                    set_status(details.dataset.principleId, card.dataset.status);
+                });
 
-                <p>Keeping the lights on.</p>
-        
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Financially secure</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Unfunded</h4>
-                            <p>There is no funding at the moment and for the forseeable future.</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Time-limited funding</h4>
-                            <p>There is time-limited funding, e.g. through a one-off grant or donation.</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Recurrent commitment</h4>
-                            <p>There is for a number of years funding, e.g. through memberships and recurrent grants.</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Structually funded</h4>
-                            <p></p>
-                        </article>
-                    </div>
-                </details>
+                app.addEventListener("input", (e) => {
+                    if (e.target.matches("textarea.notes")) {
+                        const details = e.target.closest("[data-principle-id]");
+                        state.posi[details.dataset.principleId].notes = e.target.value;
+                    }
+                });
+            }
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Human capacity available</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Zombie infrastructure</h4>
-                            <p>No one is working on this infrastructure for a forseeable time.</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>One-person show</h4>
-                            <p>One hero is keeping the lights on, but there is no backup.</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Somewhat staffed</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Dedicated resourcing</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+            function toggle_activity(label, checked) {
+                if (checked) {
+                    if (!state.activities.includes(label)) state.activities.push(label);
+                } else {
+                    state.activities = state.activities.filter((a) => a !== label);
+                }
+            }
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Legal and policy compliant</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Unknown</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Major gaps</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Bases covered</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Audited or certified</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+            function set_status(principleId, status) {
+                state.posi[principleId].status = state.posi[principleId].status === status ? null : status;
+                const details = document.querySelector('[data-principle-id="' + principleId + '"]');
+                details.querySelectorAll(".status-card").forEach((card) => {
+                    card.classList.toggle("selected", card.dataset.status === state.posi[principleId].status);
+                });
+                update_summary();
+            }
 
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Resilient</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Falls over at the first breeze</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Major gaps</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Bases covered</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Can weather a hurricane</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
+            function update_summary() {
+                const summary = compute_summary(state);
+                document.getElementById("summary-heading").textContent = "Overall: " + summary.percentCompliant + "% compliant";
+                document.getElementById("summary-counts").textContent =
+                    summary.compliant + " compliant · " + summary.progress + " making progress · " +
+                    summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+            }
 
-            </section>
-
-            <section>
-
-                <h2>Usability</h2>
-
-                <p>Providing a good user experience and letting researchers achieve their goals.</p>
-
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Interconnected</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Isolated system</h4>
-                            <p>This infrastructure has non integrations with others, and makes it difficult to even exchange data.</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Uses other systems</h4>
-                            <p>Ingest e.g. data from other systems.</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Two-way connected</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Part of flourishing ecosystem</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
-
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Seamless user-experience</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
-
-                <details class="container" name="subprinciple">
-                    <summary>
-                        <h3>Accessible to all</h3>
-                        <meter id="subprinciple-meter" value="0" min="0" max="4" low="1.5" high="3.5" optimum="4"></meter>
-                    </summary>
-                    <p>Explanatory text</p>
-                    <div class="row">
-                        <article class="card col-3 level-1">
-                            <h4>Maturity level 1</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-2">
-                            <h4>Maturity level 2</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-3">
-                            <h4>Maturity level 3</h4>
-                            <p>...</p>
-                        </article>
-                        <article class="card col-3 level-4">
-                            <h4>Maturity level 4</h4>
-                            <p>...</p>
-                        </article>
-                    </div>
-                </details>
-
-            </section>
-        
-        </main>
-
-        <button onclick="download_json()">Download results as JSON</button>
-        <button onclick="download_pdf()">Download report</button>
-
-        <script>
-            Array.from(document.getElementsByClassName("level-1")).forEach((el) => {
-                el.addEventListener("click", () => clicked(el, 1)); el.addEventListener("touchstart", () => clicked(el, 1));
-            })
-            Array.from(document.getElementsByClassName("level-2")).forEach((el) => {
-                el.addEventListener("click", () => clicked(el, 2)); el.addEventListener("touchstart", () => clicked(el, 2));
-            })
-            Array.from(document.getElementsByClassName("level-3")).forEach((el) => {
-                el.addEventListener("click", () => clicked(el, 3)); el.addEventListener("touchstart", () => clicked(el, 3));
-            })
-            Array.from(document.getElementsByClassName("level-4")).forEach((el) => {
-                el.addEventListener("click", () => clicked(el, 4)); el.addEventListener("touchstart", () => clicked(el, 4));
-            })
+            render();
         </script>
     </body>
 </html>
