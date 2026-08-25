@@ -465,6 +465,11 @@
                 loadJsonLabel.appendChild(loadJsonInput);
                 section.appendChild(loadJsonLabel);
 
+                const downloadPdfBtn = document.createElement("button");
+                downloadPdfBtn.textContent = "Download report";
+                downloadPdfBtn.addEventListener("click", download_pdf);
+                section.appendChild(downloadPdfBtn);
+
                 return section;
             }
 
@@ -496,6 +501,20 @@
                 };
                 reader.readAsText(file);
             }
+
+            function download_pdf() {
+                const doc = new jspdf.jsPDF();
+                doc.html(document.body, {
+                    callback: (doc) => doc.save("report.pdf"),
+                    x: 10,
+                    width: 200,
+                    windowWidth: 1000,
+                });
+            }
+
+            window.addEventListener("beforeprint", () => {
+                document.querySelectorAll("details").forEach((el) => el.removeAttribute("open"));
+            });
 
             render();
         </script>
