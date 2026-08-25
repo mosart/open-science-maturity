@@ -13,6 +13,7 @@
                 --destructive: rgba(185,28,28,1);
                 --compliant: rgba(13,148,136,1);
                 --font-sans: "Source Sans 3", sans-serif;
+                --focus-ring: var(--primary);
             }
             @media (prefers-color-scheme: dark) {
                 :root {
@@ -21,12 +22,10 @@
                     --warning: rgba(250,204,21,1);
                     --destructive: rgba(248,113,113,1);
                     --compliant: rgba(16,185,129,1);
+                    --focus-ring: rgba(147,197,253,1);
                 }
                 a {
                     color: rgba(147,197,253,1);
-                }
-                .status-card:focus-visible {
-                    outline-color: rgba(147,197,253,1);
                 }
             }
 
@@ -79,7 +78,7 @@
             .status-card.selected[data-status="non-compliant"] { border-color: var(--destructive); }
 
             .status-card:focus-visible {
-                outline: 2px solid var(--primary);
+                outline: 2px solid var(--focus-ring);
                 outline-offset: 2px;
             }
 
