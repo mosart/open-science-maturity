@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
     <head>
         <meta charset="UTF-8">
@@ -7,6 +8,7 @@
         <style>
             :root {
                 --primary: rgba(6,75,203,1);
+                --primary-foreground: rgba(255,255,255,1);
                 --warning: rgba(202,138,4,1);
                 --destructive: rgba(185,28,28,1);
                 --compliant: rgba(13,148,136,1);
@@ -15,6 +17,7 @@
             @media (prefers-color-scheme: dark) {
                 :root {
                     --primary: rgba(5,62,170,1);
+                    --primary-foreground: rgba(255,255,255,1);
                     --warning: rgba(250,204,21,1);
                     --destructive: rgba(248,113,113,1);
                     --compliant: rgba(16,185,129,1);
@@ -69,6 +72,8 @@
             .status-card.selected[data-status="progress"] { border-color: var(--warning); }
             .status-card.selected[data-status="non-compliant"] { border-color: var(--destructive); }
 
+            .status-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+
             textarea.notes {
                 width: 100%;
                 min-height: 40pt;
@@ -85,7 +90,7 @@
 
             #summary-heading {
                 font-size: large;
-                color: var(--primary);
+                font-weight: bold;
             }
 
             .taxonomy-group {
@@ -108,7 +113,7 @@
                 #actions {
                     display: none;
                 }
-                .status-cards {
+                #badge-section button {
                     display: none;
                 }
             }
@@ -366,6 +371,8 @@
 
                 const cards = document.createElement("div");
                 cards.className = "status-cards";
+                cards.setAttribute("role", "radiogroup");
+                cards.setAttribute("aria-label", principle.title + " maturity status");
                 [
                     { status: "compliant", label: "Compliant" },
                     { status: "progress", label: "Making progress" },
@@ -374,6 +381,9 @@
                     const card = document.createElement("article");
                     card.className = "card col-3 status-card";
                     card.dataset.status = option.status;
+                    card.setAttribute("role", "radio");
+                    card.setAttribute("tabindex", "0");
+                    card.setAttribute("aria-checked", state.posi[principle.id].status === option.status ? "true" : "false");
                     if (state.posi[principle.id].status === option.status) {
                         card.classList.add("selected");
                     }
@@ -405,20 +415,6 @@
                         toggle_activity(e.target.value, e.target.checked);
                     }
                 });
-
-                app.addEventListener("click", (e) => {
-                    const card = e.target.closest(".status-card");
-                    if (!card) return;
-                    const details = card.closest("[data-principle-id]");
-                    set_status(details.dataset.principleId, card.dataset.status);
-                });
-
-                app.addEventListener("input", (e) => {
-                    if (e.target.matches("textarea.notes")) {
-                        const details = e.target.closest("[data-principle-id]");
-                        state.posi[details.dataset.principleId].notes = e.target.value;
-                    }
-                });
             }
 
             function toggle_activity(label, checked) {
@@ -433,7 +429,9 @@
                 state.posi[principleId].status = state.posi[principleId].status === status ? null : status;
                 const details = document.querySelector('[data-principle-id="' + principleId + '"]');
                 details.querySelectorAll(".status-card").forEach((card) => {
-                    card.classList.toggle("selected", card.dataset.status === state.posi[principleId].status);
+                    const isSelected = card.dataset.status === state.posi[principleId].status;
+                    card.classList.toggle("selected", isSelected);
+                    card.setAttribute("aria-checked", isSelected ? "true" : "false");
                 });
                 update_summary();
                 update_badge();
@@ -488,6 +486,7 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(link.href), 0);
             }
 
             function load_json(file) {
@@ -517,7 +516,7 @@
             }
 
             window.addEventListener("beforeprint", () => {
-                document.querySelectorAll("details").forEach((el) => el.removeAttribute("open"));
+                document.querySelectorAll("details").forEach((el) => el.setAttribute("open", ""));
             });
 
             const RING_CONFIG = [
@@ -572,8 +571,9 @@
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + " " + size + '" width="' + size + '" height="' + size + '">' +
                     '<rect width="' + size + '" height="' + size + '" fill="white" />' +
                     circles +
-                    '<text x="' + center + '" y="' + (center - 4) + '" text-anchor="middle" font-size="22" font-family="Source Sans 3, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
-                    '<text x="' + center + '" y="' + (center + 14) + '" text-anchor="middle" font-size="8" font-family="Source Sans 3, sans-serif">' + name + "</text>" +
+                    '<text x="' + center + '" y="' + (center - 8) + '" text-anchor="middle" font-size="20" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
+                    '<text x="' + center + '" y="' + (center + 6) + '" text-anchor="middle" font-size="7" font-family="&quot;Source Sans 3&quot;, sans-serif">' + summary.scoredCount + "/" + summary.totalCount + " scored</text>" +
+                    '<text x="' + center + '" y="' + (center + 16) + '" text-anchor="middle" font-size="7" font-family="&quot;Source Sans 3&quot;, sans-serif">' + name + "</text>" +
                     "</svg>"
                 );
             }
@@ -616,6 +616,7 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(link.href), 0);
             }
 
             function download_badge_svg() {
@@ -640,8 +641,31 @@
                         trigger_download(URL.createObjectURL(blob), "badge.png");
                     });
                 };
+                img.onerror = () => alert("Could not generate the badge image.");
                 img.src = url;
             }
+
+            const appRoot = document.getElementById("app");
+            appRoot.addEventListener("click", (e) => {
+                const card = e.target.closest(".status-card");
+                if (!card) return;
+                const details = card.closest("[data-principle-id]");
+                set_status(details.dataset.principleId, card.dataset.status);
+            });
+            appRoot.addEventListener("input", (e) => {
+                if (e.target.matches("textarea.notes")) {
+                    const details = e.target.closest("[data-principle-id]");
+                    state.posi[details.dataset.principleId].notes = e.target.value;
+                }
+            });
+            appRoot.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                const card = e.target.closest(".status-card");
+                if (!card) return;
+                e.preventDefault();
+                const details = card.closest("[data-principle-id]");
+                set_status(details.dataset.principleId, card.dataset.status);
+            });
 
             render();
         </script>
