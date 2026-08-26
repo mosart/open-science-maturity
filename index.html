@@ -1078,7 +1078,7 @@
                 if (e.target.tagName !== "A") return;
                 document.getElementById("app-shell").removeAttribute("data-sidebar-open");
                 document.getElementById("sidebar-toggle").setAttribute("aria-expanded", "false");
-            });
+            }, true);
 
             const appRoot = document.getElementById("app");
             appRoot.addEventListener("click", (e) => {
