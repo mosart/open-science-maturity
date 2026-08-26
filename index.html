@@ -403,7 +403,7 @@
         <div data-sidebar-layout id="app-shell">
             <aside data-sidebar>
                 <header>
-                    <h2>POSI Assessment</h2>
+                    <h2>Open Science infrastructure Self-assessment Tool</h2>
                 </header>
                 <nav id="sidebar-nav"></nav>
                 <footer id="sidebar-footer"></footer>
@@ -432,18 +432,41 @@
                 const nav = document.getElementById("sidebar-nav");
                 nav.innerHTML = "";
                 const ul = document.createElement("ul");
-                const links = [{ href: "#classify-section", label: "Classify" }].concat(
-                    POSI.map((section) => ({ href: "#" + posi_section_id(section), label: section.section }))
-                );
-                links.forEach((link) => {
+
+                ul.appendChild(render_nav_link("#about-section", "About"));
+                ul.appendChild(render_nav_link("#infra-description-section", "OS Infrastructure Description"));
+
+                FRAMEWORKS.forEach((framework) => {
                     const li = document.createElement("li");
+                    const groupDetails = document.createElement("details");
+                    groupDetails.open = true;
+                    const summary = document.createElement("summary");
                     const a = document.createElement("a");
-                    a.href = link.href;
-                    a.textContent = link.label;
-                    li.appendChild(a);
+                    a.href = "#framework-" + framework.id;
+                    a.textContent = framework.title;
+                    summary.appendChild(a);
+                    groupDetails.appendChild(summary);
+
+                    const subUl = document.createElement("ul");
+                    framework.sections.forEach((section) => {
+                        subUl.appendChild(render_nav_link("#" + posi_section_id(section), section.section));
+                    });
+                    groupDetails.appendChild(subUl);
+
+                    li.appendChild(groupDetails);
                     ul.appendChild(li);
                 });
+
                 nav.appendChild(ul);
+            }
+
+            function render_nav_link(href, label) {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = href;
+                a.textContent = label;
+                li.appendChild(a);
+                return li;
             }
 
             function render_sidebar_footer() {
