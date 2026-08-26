@@ -16,24 +16,59 @@ Constraints"). This is a CSS/markup pass, not a rewrite of `app-render`'s
 rendering logic — `render()`/`render_*()` functions keep their current shape;
 only which classes/inline styles they apply changes.
 
-**Before starting:** `surfnet.github.io` was unreachable from this sandbox
-(egress-proxy blocked) when this plan was written, so the exact SURF brand
-values below are inherited from what's already hand-copied into `:root`
-(`index.html:9-30`), not freshly re-verified against the live design system.
-Re-check https://surfnet.github.io/DesignSystem/ for current color/type
-tokens before implementing, and update the values below if they've drifted.
+**Before starting — resolved:** `surfnet.github.io` was unreachable from this
+sandbox (egress-proxy blocked) when this plan was first written, so the SURF
+brand values were unverified. Since then the actual source repo,
+[`SURFnet/DesignSystem`](https://github.com/SURFnet/DesignSystem) (the
+"Curve" design system — see the architecture note below), was cloned and its
+raw token source (`packages/tokens/src/tokens.json` / `tokens.dark.json`,
+DTCG format) diffed against `index.html`'s `:root`. **Every value already in
+the page is an exact match**: `primary` (`rgba(6,75,203,1)` light /
+`rgba(5,62,170,1)` dark), `warning` (`rgba(202,138,4,1)` / `rgba(250,204,21,1)`),
+`destructive` (`rgba(185,28,28,1)` / `rgba(248,113,113,1)`), the teal used for
+`--compliant` (Curve's `chart-2`: `rgba(13,148,136,1)` / `rgba(16,185,129,1)`),
+and `font-sans` (`Source Sans 3, sans-serif`). Nothing has drifted — Task 1's
+"verify against the live design system" step is done; only the *naming*
+reconciliation (below) remains open.
+
+### Architecture note: why Oat, not Curve, stays the framework
+
+`SURFnet/DesignSystem` ships as **Curve** — a Turborepo monorepo of framework
+component packages (`@surfnet/curve-react`: shadcn/ui + Base UI on Vite;
+`@surfnet/curve-angular`: Spartan), requiring Node 22, pnpm, and a
+React-or-Angular build pipeline. There is no standalone CSS file to link and
+no CDN drop-in; using its components means writing JSX/TSX or Angular
+templates and running a bundler. That's incompatible with this project's
+core constraint (`CLAUDE.md`: "single standalone `index.html` — no build
+step, no package manager, no server") — adopting Curve's components directly
+would mean rewriting the entire delivery model, not restyling a page.
+
+What Curve *does* provide cleanly is `packages/tokens` — the DTCG-format
+color/radius/shadow/type tokens with no framework attached, which both
+component packages are built from. That's the part already vendored into
+`index.html`, and it's current (see above). So the split stays: **Oat is the
+structural CSS framework** (buttons, cards, grid, spacing scale, as plain CSS
+with zero build step — it plays the role Curve's component packages would
+otherwise play), and **Curve is the source of truth for token values only**.
+Revisit this split only if the project is ever willing to give up the
+single-file constraint for a full React/Angular rebuild — a much bigger
+decision than a layout pass.
 
 ---
 
 ## Root cause
 
-1. **Two overlapping color systems.** Oat already ships semantic status
-   colors (`--success`, `--warning`, `--danger`, plus `--card`, `--muted`,
-   `--border`, `--accent` — see `oat.min.css`'s `:root`), but the page's own
-   `<style>` block invents `--compliant`/`--destructive` instead of reusing
-   `--success`/`--danger`, and redefines `--warning` and `--primary`
-   redundantly. Result: some elements pick up Oat's palette, others the
-   custom one, and they don't visually match.
+1. **Two overlapping color systems.** Oat already ships its own semantic
+   status colors (`--success`, `--warning`, `--danger`, plus `--card`,
+   `--muted`, `--border`, `--accent` — see `oat.min.css`'s `:root`). The
+   page's own `<style>` block instead defines `--compliant`/`--destructive`
+   as separate custom properties (correctly sourced from SURF/Curve's actual
+   tokens — see the resolved note above; Curve itself has no "success"/
+   "compliant" semantic slot, only a generic `chart-2` teal used here by a
+   prior, reasonable choice) and redeclares `--warning`/`--primary`
+   alongside Oat's own same-named variables. Result: two parallel token sets
+   with overlapping names/purposes that don't visually reconcile, even
+   though the underlying values are each individually correct.
 2. **`pt` units instead of Oat's spacing scale.** `body { margin: 20pt }`,
    `h2 { margin-left: 20pt }`, `section > p { margin-left: 24pt }`,
    `.status-cards { padding-right: 24pt }`, etc. all hand-pick pixel-ish
@@ -62,18 +97,20 @@ tokens before implementing, and update the values below if they've drifted.
 
 **File:** `index.html`, `:root` block (`index.html:9-30`).
 
-- Verify current SURF hex/rgba values against
-  https://surfnet.github.io/DesignSystem/ (primary blue, warning amber,
-  destructive red, compliant teal, `Source Sans 3` font) and update if the
-  design system has changed since these were copied.
-- Stop inventing new token names. Map POSI statuses onto Oat's own semantic
-  vars instead of parallel ones:
+- SURF/Curve value verification is done (see the resolved note above) — no
+  re-fetch needed, just apply the renaming below.
+- Stop declaring parallel token names. Map POSI statuses onto Oat's own
+  semantic vars instead of separate ones (this is an internal-consistency
+  choice — Oat is the CSS framework in use, so its slot names are what the
+  rest of `oat.min.css` already keys off of — carrying over the
+  SURF/Curve-sourced *values* unchanged):
   - `compliant` → override Oat's `--success` (currently `#008032`/`#6cc070`)
-    with the SURF teal value, instead of a separate `--compliant`.
+    with the Curve `chart-2` teal value (`rgba(13,148,136,1)`/
+    `rgba(16,185,129,1)`), instead of a separate `--compliant`.
   - `progress` → override Oat's existing `--warning` (Oat already defines
     it) with the SURF amber value — don't redeclare it as a "new" token.
   - `non-compliant` → override Oat's `--danger` (currently `#d32f2f`/
-    `#f4807b`) with the SURF red value, instead of a separate
+    `#f4807b`) with the Curve `destructive` value, instead of a separate
     `--destructive`.
   - `--primary`/`--primary-foreground` → Oat already defines both; only
     override the *values* with SURF's brand blue, don't redeclare
