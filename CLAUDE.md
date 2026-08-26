@@ -33,5 +33,5 @@ There is no committed test suite — this matches the project's "no build step" 
 
 ## Notes
 
-- A framework's `draft: true` flag (on a `FRAMEWORKS` entry) renders as a small `.draft-label` ("Draft – work in progress") next to that framework's title in the main content and as a "(draft)" suffix in its sidebar navigation link; this allows frameworks to be marked as unfinished individually. POSI currently has no `draft` field, so no labels appear.
+- A framework's `draft: true` flag (on a `FRAMEWORKS` entry) renders as a small `.draft-label` ("Draft – work in progress") next to that framework's title in the main content and as a "(draft)" suffix in its sidebar navigation link; this allows frameworks to be marked as unfinished individually. POSI has no `draft` field, so it shows no label; SPII sets `draft: true`, so its label appears.
 - The linked `jspdf` and `html2canvas` scripts are pulled from `unpkg.com` / `html2canvas.hertzen.com` CDNs — there is no local vendoring for these two.
