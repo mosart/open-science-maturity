@@ -120,14 +120,14 @@
                 font-family: var(--font-sans);
             }
 
-            #summary-section {
+            .summary-section {
                 display: flex;
                 align-items: baseline;
                 gap: 24pt;
                 margin-left: 20pt;
             }
 
-            #summary-heading {
+            .summary-heading {
                 font-size: large;
                 font-weight: bold;
             }
@@ -624,14 +624,15 @@
                 return wrap;
             }
 
-            function render_framework_summary() {
+            function render_framework_summary(framework) {
                 const section = document.createElement("section");
-                section.id = "summary-section";
+                section.className = "summary-section";
                 const heading = document.createElement("strong");
-                heading.id = "summary-heading";
+                heading.id = "summary-heading-" + framework.id;
+                heading.className = "summary-heading";
                 heading.textContent = "Overall: 0% compliant";
                 const counts = document.createElement("span");
-                counts.id = "summary-counts";
+                counts.id = "summary-counts-" + framework.id;
                 section.appendChild(heading);
                 section.appendChild(counts);
                 return section;
@@ -652,7 +653,7 @@
                 about.innerHTML = "<summary>About " + framework.shortName + "</summary>" + framework.aboutHtml;
                 section.appendChild(about);
 
-                section.appendChild(render_framework_summary());
+                section.appendChild(render_framework_summary(framework));
 
                 framework.sections.forEach((frameworkSection) => {
                     section.appendChild(render_framework_content_section(frameworkSection, framework.id));
@@ -888,11 +889,16 @@
             }
 
             function update_summary() {
-                const summary = compute_summary(state, "posi");
-                document.getElementById("summary-heading").textContent = "Overall: " + summary.percentCompliant + "% compliant";
-                document.getElementById("summary-counts").textContent =
-                    summary.compliant + " compliant · " + summary.progress + " making progress · " +
-                    summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+                FRAMEWORKS.forEach((framework) => {
+                    const summary = compute_summary(state, framework.id);
+                    const heading = document.getElementById("summary-heading-" + framework.id);
+                    const counts = document.getElementById("summary-counts-" + framework.id);
+                    if (!heading || !counts) return;
+                    heading.textContent = "Overall: " + summary.percentCompliant + "% compliant";
+                    counts.textContent =
+                        summary.compliant + " compliant · " + summary.progress + " making progress · " +
+                        summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+                });
             }
 
             function download_json() {
