@@ -114,6 +114,32 @@
                 margin-left: 16pt;
             }
 
+            .classify-columns {
+                display: flex;
+                gap: 16pt;
+                flex-wrap: wrap;
+            }
+
+            .classify-column {
+                flex: 1 1 240pt;
+            }
+
+            .field {
+                display: block;
+                margin-bottom: 8pt;
+            }
+
+            .field span {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 2pt;
+            }
+
+            .field input,
+            .field textarea {
+                width: 100%;
+            }
+
             #sidebar-footer button {
                 display: block;
                 width: 100%;
@@ -392,9 +418,8 @@
                 const app = document.getElementById("app");
                 app.innerHTML = "";
                 app.appendChild(render_header());
-                app.appendChild(render_summary_section());
-                app.appendChild(render_classify_section());
-                POSI.forEach((section) => app.appendChild(render_posi_section(section)));
+                app.appendChild(render_infra_description_section());
+                FRAMEWORKS.forEach((framework) => app.appendChild(render_framework_section(framework)));
                 app.appendChild(render_actions_section());
                 render_sidebar_nav();
                 render_sidebar_footer();
@@ -457,24 +482,22 @@
                 wrap.appendChild(toggleBtn);
 
                 const h1 = document.createElement("h1");
-                h1.appendChild(document.createTextNode("Open Science infrastructure self-assessment for "));
-                const nameInput = document.createElement("input");
-                nameInput.type = "text";
-                nameInput.id = "infra-name";
-                nameInput.placeholder = "name of the infrastructure";
-                nameInput.style.display = "inline-block";
-                nameInput.style.width = "200pt";
-                nameInput.value = state.name;
-                h1.appendChild(nameInput);
+                h1.textContent = "Open Science Infrastructure Assessment Tool";
                 wrap.appendChild(h1);
 
                 const intro = document.createElement("p");
-                intro.innerHTML = 'Based on the <a href="https://openscholarlyinfrastructure.org/">Principles of Open Scholarly Infrastructure (POSI) v2.0</a>. Cite as: POSI Adopters (2025), The Principles of Open Scholarly Infrastructure, <a href="https://doi.org/10.14454/G8WV-VM65">https://doi.org/10.14454/G8WV-VM65</a>.';
+                intro.textContent = "Self-assess how your Open Science infrastructure puts open science values and principles into practice, against one or more community-recognised assessment frameworks.";
                 wrap.appendChild(intro);
+
+                const about = document.createElement("details");
+                about.id = "about-section";
+                about.innerHTML = "<summary>About this tool</summary>" + ABOUT_TOOL_HTML;
+                wrap.appendChild(about);
+
                 return wrap;
             }
 
-            function render_summary_section() {
+            function render_framework_summary() {
                 const section = document.createElement("section");
                 section.id = "summary-section";
                 const heading = document.createElement("strong");
@@ -487,33 +510,100 @@
                 return section;
             }
 
-            function render_classify_section() {
+            function render_framework_section(framework) {
                 const section = document.createElement("section");
-                section.id = "classify-section";
+                section.id = "framework-" + framework.id;
                 const h2 = document.createElement("h2");
-                h2.textContent = "Classify";
+                h2.textContent = framework.title;
                 section.appendChild(h2);
-                const p = document.createElement("p");
-                p.textContent = "This infrastructure supports the following activities:";
-                section.appendChild(p);
 
-                const list = document.createElement("div");
-                [ACTIVITIES.primary, ACTIVITIES.related].forEach((group) => {
-                    const groupWrap = document.createElement("div");
-                    const groupLabel = document.createElement("strong");
-                    groupLabel.textContent = group.title;
-                    groupWrap.appendChild(groupLabel);
-                    const groupList = document.createElement("div");
-                    groupList.className = "taxonomy-group";
-                    group.items.forEach((item) => {
-                        const value = group.title + " > " + item;
-                        groupList.appendChild(render_activity_checkbox(value, item));
-                    });
-                    groupWrap.appendChild(groupList);
-                    list.appendChild(groupWrap);
+                const desc = document.createElement("p");
+                desc.textContent = framework.description;
+                section.appendChild(desc);
+
+                const about = document.createElement("details");
+                about.innerHTML = "<summary>About " + framework.shortName + "</summary>" + framework.aboutHtml;
+                section.appendChild(about);
+
+                section.appendChild(render_framework_summary());
+
+                framework.sections.forEach((frameworkSection) => {
+                    section.appendChild(render_framework_content_section(frameworkSection));
                 });
-                section.appendChild(list);
+
                 return section;
+            }
+
+            function render_infra_description_section() {
+                const section = document.createElement("section");
+                section.id = "infra-description-section";
+                const h2 = document.createElement("h2");
+                h2.textContent = "OS Infrastructure Description";
+                section.appendChild(h2);
+
+                section.appendChild(render_text_field("infra-name", "Infrastructure name", state.name, "text", "name of the infrastructure"));
+                section.appendChild(render_textarea_field("infra-description", "Description", state.description, "brief description of the infrastructure"));
+                section.appendChild(render_text_field("infra-url", "Landing page URL", state.url, "url", "https://..."));
+                section.appendChild(render_text_field("infra-assessed-on", "Assessment date", state.assessedOn, "date", ""));
+
+                const classifyHeading = document.createElement("h3");
+                classifyHeading.textContent = "Classify";
+                section.appendChild(classifyHeading);
+                const classifyIntro = document.createElement("p");
+                classifyIntro.textContent = "This infrastructure supports the following activities:";
+                section.appendChild(classifyIntro);
+
+                const columns = document.createElement("div");
+                columns.className = "classify-columns";
+                columns.appendChild(render_activities_column(ACTIVITIES.primary));
+                columns.appendChild(render_activities_column(ACTIVITIES.related));
+                section.appendChild(columns);
+
+                return section;
+            }
+
+            function render_text_field(id, labelText, value, type, placeholder) {
+                const label = document.createElement("label");
+                label.className = "field";
+                label.htmlFor = id;
+                const span = document.createElement("span");
+                span.textContent = labelText;
+                label.appendChild(span);
+                const input = document.createElement("input");
+                input.type = type;
+                input.id = id;
+                input.value = value;
+                if (placeholder) input.placeholder = placeholder;
+                label.appendChild(input);
+                return label;
+            }
+
+            function render_textarea_field(id, labelText, value, placeholder) {
+                const label = document.createElement("label");
+                label.className = "field";
+                label.htmlFor = id;
+                const span = document.createElement("span");
+                span.textContent = labelText;
+                label.appendChild(span);
+                const textarea = document.createElement("textarea");
+                textarea.id = id;
+                textarea.value = value;
+                if (placeholder) textarea.placeholder = placeholder;
+                label.appendChild(textarea);
+                return label;
+            }
+
+            function render_activities_column(group) {
+                const box = document.createElement("div");
+                box.className = "card classify-column";
+                const h4 = document.createElement("h4");
+                h4.textContent = group.title;
+                box.appendChild(h4);
+                group.items.forEach((item) => {
+                    const value = group.title + " > " + item;
+                    box.appendChild(render_activity_checkbox(value, item));
+                });
+                return box;
             }
 
             function render_activity_checkbox(value, labelText) {
@@ -532,12 +622,12 @@
                 return "posi-" + section.section.toLowerCase();
             }
 
-            function render_posi_section(section) {
+            function render_framework_content_section(section) {
                 const el = document.createElement("section");
                 el.id = posi_section_id(section);
-                const h2 = document.createElement("h2");
-                h2.textContent = section.section;
-                el.appendChild(h2);
+                const h3 = document.createElement("h3");
+                h3.textContent = section.section;
+                el.appendChild(h3);
                 const sourceNote = document.createElement("p");
                 sourceNote.innerHTML = 'Source: <a href="' + section.sourceUrl + '">' + section.sourceUrl + "</a>";
                 el.appendChild(sourceNote);
@@ -603,7 +693,20 @@
                     update_badge();
                 });
 
-                document.getElementById("classify-section").addEventListener("change", (e) => {
+                document.getElementById("infra-description").addEventListener("input", (e) => {
+                    state.description = e.target.value;
+                });
+
+                document.getElementById("infra-url").addEventListener("input", (e) => {
+                    state.url = e.target.value;
+                });
+
+                document.getElementById("infra-assessed-on").addEventListener("input", (e) => {
+                    state.assessedOn = e.target.value;
+                    update_badge();
+                });
+
+                document.getElementById("infra-description-section").addEventListener("change", (e) => {
                     if (e.target.matches('input[type="checkbox"]')) {
                         toggle_activity(e.target.value, e.target.checked);
                     }
