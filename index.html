@@ -644,7 +644,7 @@
                 section.appendChild(render_framework_summary());
 
                 framework.sections.forEach((frameworkSection) => {
-                    section.appendChild(render_framework_content_section(frameworkSection));
+                    section.appendChild(render_framework_content_section(frameworkSection, framework.id));
                 });
 
                 return section;
@@ -738,7 +738,7 @@
                 return "posi-" + section.section.toLowerCase();
             }
 
-            function render_framework_content_section(section) {
+            function render_framework_content_section(section, frameworkId) {
                 const el = document.createElement("section");
                 el.id = posi_section_id(section);
                 const h3 = document.createElement("h3");
@@ -748,15 +748,16 @@
                 sourceNote.innerHTML = 'Source: <a href="' + section.sourceUrl + '">' + section.sourceUrl + "</a>";
                 el.appendChild(sourceNote);
                 section.principles.forEach((principle) => {
-                    el.appendChild(render_principle(principle));
+                    el.appendChild(render_principle(principle, frameworkId));
                 });
                 return el;
             }
 
-            function render_principle(principle) {
+            function render_principle(principle, frameworkId) {
                 const details = document.createElement("details");
                 details.className = "container";
                 details.dataset.principleId = principle.id;
+                details.dataset.frameworkId = frameworkId;
 
                 const summary = document.createElement("summary");
                 const h4 = document.createElement("h4");
@@ -782,8 +783,8 @@
                     card.dataset.status = option.status;
                     card.setAttribute("role", "button");
                     card.setAttribute("tabindex", "0");
-                    card.setAttribute("aria-pressed", state.frameworks.posi[principle.id].status === option.status ? "true" : "false");
-                    if (state.frameworks.posi[principle.id].status === option.status) {
+                    card.setAttribute("aria-pressed", state.frameworks[frameworkId][principle.id].status === option.status ? "true" : "false");
+                    if (state.frameworks[frameworkId][principle.id].status === option.status) {
                         card.classList.add("selected");
                     }
                     const icon = document.createElement("span");
@@ -802,7 +803,7 @@
                 const notes = document.createElement("textarea");
                 notes.className = "notes";
                 notes.placeholder = "Explain your reasoning (optional)";
-                notes.value = state.frameworks.posi[principle.id].notes;
+                notes.value = state.frameworks[frameworkId][principle.id].notes;
                 details.appendChild(notes);
 
                 return details;
@@ -848,11 +849,11 @@
                 }
             }
 
-            function set_status(principleId, status) {
-                state.frameworks.posi[principleId].status = state.frameworks.posi[principleId].status === status ? null : status;
-                const details = document.querySelector('[data-principle-id="' + principleId + '"]');
+            function set_status(frameworkId, principleId, status) {
+                state.frameworks[frameworkId][principleId].status = state.frameworks[frameworkId][principleId].status === status ? null : status;
+                const details = document.querySelector('[data-framework-id="' + frameworkId + '"][data-principle-id="' + principleId + '"]');
                 details.querySelectorAll(".status-card").forEach((card) => {
-                    const isSelected = card.dataset.status === state.frameworks.posi[principleId].status;
+                    const isSelected = card.dataset.status === state.frameworks[frameworkId][principleId].status;
                     card.classList.toggle("selected", isSelected);
                     card.setAttribute("aria-pressed", isSelected ? "true" : "false");
                 });
@@ -1085,12 +1086,12 @@
                 const card = e.target.closest(".status-card");
                 if (!card) return;
                 const details = card.closest("[data-principle-id]");
-                set_status(details.dataset.principleId, card.dataset.status);
+                set_status(details.dataset.frameworkId, details.dataset.principleId, card.dataset.status);
             });
             appRoot.addEventListener("input", (e) => {
                 if (e.target.matches("textarea.notes")) {
                     const details = e.target.closest("[data-principle-id]");
-                    state.frameworks.posi[details.dataset.principleId].notes = e.target.value;
+                    state.frameworks[details.dataset.frameworkId][details.dataset.principleId].notes = e.target.value;
                 }
             });
             appRoot.addEventListener("keydown", (e) => {
@@ -1099,7 +1100,7 @@
                 if (!card) return;
                 e.preventDefault();
                 const details = card.closest("[data-principle-id]");
-                set_status(details.dataset.principleId, card.dataset.status);
+                set_status(details.dataset.frameworkId, details.dataset.principleId, card.dataset.status);
             });
 
             render();
