@@ -12,7 +12,7 @@ framework content is added here. POSI remains the only framework with real
 content, and its on-screen appearance must not change as a result of this
 plan (aside from one pre-existing bug fix, noted below).
 
-## Background: a latent bug this plan fixes
+## Background: latent bugs this plan fixes
 
 `render_framework_section(framework)` is already called once per
 `FRAMEWORKS` entry, but the summary section it renders
@@ -25,6 +25,21 @@ invisible. The moment a second framework section renders, its summary
 placeholder would silently never update — a bug that has existed since the
 prior plan but never surfaced because only POSI existed. This plan fixes it
 as part of making summaries framework-scoped.
+
+A second, more serious latent bug: `render_principle(principle)`,
+`set_status(principleId, status)`, and the notes-textarea input listener
+are all hardcoded to read/write `state.frameworks.posi[...]` directly,
+regardless of which framework's section they were rendered under. This
+isn't just a display issue — it's the actual scoring data path. Rendering
+a second framework's principles through the current `render_principle`
+would either throw (if the principle id doesn't exist in POSI's slice) or,
+worse, silently write that principle's status into the *wrong* framework's
+state if ids ever collided. This plan threads a `frameworkId` through
+`render_framework_content_section` → `render_principle` (stored as
+`details.dataset.frameworkId`, alongside the existing
+`details.dataset.principleId`) and through `set_status`, so each
+principle's status/notes are read from and written to the correct
+framework's slice of `state.frameworks`.
 
 ## Out of scope
 
