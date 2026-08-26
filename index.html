@@ -30,8 +30,17 @@
             }
 
             body {
-                margin: 20pt;
+                margin: 0;
                 font-family: var(--font-sans);
+            }
+
+            /* The 20pt inset moves from body's margin onto #app here instead of
+               staying a body margin: [data-sidebar-layout]'s off-canvas math
+               (translateX(-100%) on mobile) assumes the shell sits flush against
+               the real viewport edge — a body margin leaves a sliver of the
+               sidebar visible past that inset when it's supposed to be hidden. */
+            #app-shell > main {
+                padding: 20pt;
             }
 
             h2 {
@@ -105,6 +114,21 @@
                 margin-left: 16pt;
             }
 
+            #sidebar-footer button {
+                display: block;
+                width: 100%;
+                margin-top: var(--space-2);
+            }
+
+            #sidebar-footer svg {
+                max-width: 100%;
+                height: auto;
+            }
+
+            [data-sidebar-toggle] {
+                margin-bottom: var(--space-2);
+            }
+
             #watermark {
                 position: fixed;
                 bottom: 50%;
@@ -118,21 +142,57 @@
             }
 
             @media print {
-                #actions {
-                    display: none;
-                }
-                #badge-section button {
+                #actions,
+                #sidebar-footer button,
+                [data-sidebar-toggle],
+                aside[data-sidebar] > header,
+                aside[data-sidebar] > nav {
                     display: none;
                 }
                 .status-card:not(.selected) {
                     display: none;
                 }
+                /* [data-sidebar-layout] fixes the page to 100dvh with an internally
+                   scrolling <main> (oat.min.css) — reset to normal document flow so
+                   jsPDF/print capture the whole assessment, not one viewport's worth. */
+                #app-shell {
+                    display: block;
+                    height: auto;
+                }
+                #app-shell > aside[data-sidebar] {
+                    height: auto;
+                    border: none;
+                    box-shadow: none;
+                }
+                #app-shell > main {
+                    height: auto;
+                    overflow: visible;
+                }
             }
 
             body.printing #actions,
-            body.printing #badge-section button,
+            body.printing #sidebar-footer button,
+            body.printing [data-sidebar-toggle],
+            body.printing aside[data-sidebar] > header,
+            body.printing aside[data-sidebar] > nav,
             body.printing .status-card:not(.selected) {
                 display: none;
+            }
+
+            body.printing #app-shell {
+                display: block;
+                height: auto;
+            }
+
+            body.printing #app-shell > aside[data-sidebar] {
+                height: auto;
+                border: none;
+                box-shadow: none;
+            }
+
+            body.printing #app-shell > main {
+                height: auto;
+                overflow: visible;
             }
         </style>
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
@@ -260,7 +320,16 @@
 
         <span id="watermark">DRAFT – WORK IN PROGRESS</span>
 
-        <main id="app"></main>
+        <div data-sidebar-layout id="app-shell">
+            <aside data-sidebar>
+                <header>
+                    <h2>POSI Assessment</h2>
+                </header>
+                <nav id="sidebar-nav"></nav>
+                <footer id="sidebar-footer"></footer>
+            </aside>
+            <main id="app"></main>
+        </div>
 
         <script id="app-render">
             let state = initial_state();
@@ -272,15 +341,67 @@
                 app.appendChild(render_summary_section());
                 app.appendChild(render_classify_section());
                 POSI.forEach((section) => app.appendChild(render_posi_section(section)));
-                app.appendChild(render_badge_section());
                 app.appendChild(render_actions_section());
+                render_sidebar_nav();
+                render_sidebar_footer();
                 wire_up_events();
                 update_summary();
                 update_badge();
             }
 
+            function render_sidebar_nav() {
+                const nav = document.getElementById("sidebar-nav");
+                nav.innerHTML = "";
+                const ul = document.createElement("ul");
+                const links = [{ href: "#classify-section", label: "Classify" }].concat(
+                    POSI.map((section) => ({ href: "#" + posi_section_id(section), label: section.section }))
+                );
+                links.forEach((link) => {
+                    const li = document.createElement("li");
+                    const a = document.createElement("a");
+                    a.href = link.href;
+                    a.textContent = link.label;
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+                nav.appendChild(ul);
+            }
+
+            function render_sidebar_footer() {
+                const footer = document.getElementById("sidebar-footer");
+                footer.innerHTML = "";
+
+                const heading = document.createElement("h3");
+                heading.textContent = "Certification badge";
+                footer.appendChild(heading);
+
+                const preview = document.createElement("div");
+                preview.id = "badge-preview";
+                footer.appendChild(preview);
+
+                const svgBtn = document.createElement("button");
+                svgBtn.textContent = "Download badge (SVG)";
+                svgBtn.addEventListener("click", download_badge_svg);
+                footer.appendChild(svgBtn);
+
+                const pngBtn = document.createElement("button");
+                pngBtn.textContent = "Download badge (PNG)";
+                pngBtn.addEventListener("click", download_badge_png);
+                footer.appendChild(pngBtn);
+            }
+
             function render_header() {
                 const wrap = document.createElement("div");
+
+                const toggleBtn = document.createElement("button");
+                toggleBtn.type = "button";
+                toggleBtn.id = "sidebar-toggle";
+                toggleBtn.setAttribute("data-sidebar-toggle", "");
+                toggleBtn.setAttribute("aria-label", "Toggle navigation");
+                toggleBtn.setAttribute("aria-expanded", "false");
+                toggleBtn.textContent = "☰ Menu";
+                wrap.appendChild(toggleBtn);
+
                 const h1 = document.createElement("h1");
                 h1.appendChild(document.createTextNode("Open Science infrastructure self-assessment for "));
                 const nameInput = document.createElement("input");
@@ -357,8 +478,13 @@
                 return label;
             }
 
+            function posi_section_id(section) {
+                return "posi-" + section.section.toLowerCase();
+            }
+
             function render_posi_section(section) {
                 const el = document.createElement("section");
+                el.id = posi_section_id(section);
                 const h2 = document.createElement("h2");
                 h2.textContent = section.section;
                 el.appendChild(h2);
@@ -431,6 +557,11 @@
                     if (e.target.matches('input[type="checkbox"]')) {
                         toggle_activity(e.target.value, e.target.checked);
                     }
+                });
+
+                document.getElementById("sidebar-toggle").addEventListener("click", (e) => {
+                    const isOpen = document.getElementById("app-shell").toggleAttribute("data-sidebar-open");
+                    e.currentTarget.setAttribute("aria-expanded", String(isOpen));
                 });
             }
 
@@ -625,30 +756,6 @@
                 container.innerHTML = build_badge_svg_markup(state);
             }
 
-            function render_badge_section() {
-                const section = document.createElement("section");
-                section.id = "badge-section";
-                const h2 = document.createElement("h2");
-                h2.textContent = "Certification badge";
-                section.appendChild(h2);
-
-                const preview = document.createElement("div");
-                preview.id = "badge-preview";
-                section.appendChild(preview);
-
-                const svgBtn = document.createElement("button");
-                svgBtn.textContent = "Download badge (SVG)";
-                svgBtn.addEventListener("click", download_badge_svg);
-                section.appendChild(svgBtn);
-
-                const pngBtn = document.createElement("button");
-                pngBtn.textContent = "Download badge (PNG)";
-                pngBtn.addEventListener("click", download_badge_png);
-                section.appendChild(pngBtn);
-
-                return section;
-            }
-
             function trigger_download(href, filename) {
                 const link = document.createElement("a");
                 link.href = href;
@@ -692,6 +799,12 @@
                 };
                 img.src = url;
             }
+
+            document.getElementById("sidebar-nav").addEventListener("click", (e) => {
+                if (e.target.tagName !== "A") return;
+                document.getElementById("app-shell").removeAttribute("data-sidebar-open");
+                document.getElementById("sidebar-toggle").setAttribute("aria-expanded", "false");
+            });
 
             const appRoot = document.getElementById("app");
             appRoot.addEventListener("click", (e) => {
