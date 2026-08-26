@@ -1,23 +1,32 @@
 # Open Science infrastructure maturity assessment
 
-A self-assessment tool for Open Science infrastructures against the
-[Principles of Open Scholarly Infrastructure (POSI) v2.0](https://openscholarlyinfrastructure.org/).
-Name your infrastructure, classify the activities it supports, score all 20
-POSI principles as compliant / making progress / not compliant with optional
-notes, and export the result.
+A self-assessment tool for Open Science infrastructures. Name your
+infrastructure, classify the activities it supports, and score it against
+one or more assessment frameworks as compliant / making progress / not
+compliant with optional notes, then export the result.
+
+Two frameworks are included today:
+
+- **[Principles of Open Scholarly Infrastructure (POSI) v2.0](https://openscholarlyinfrastructure.org/)**
+  — 20 principles across Governance, Sustainability, and Insurance.
+- **SPII v0.0.1** (draft) — 19 principles across Openness, Autonomy,
+  Sustainability, Interoperability, and Researcher-centric.
 
 ## Features
 
-- **Classify** — tag the infrastructure against an activities taxonomy
-  (including the research lifecycle sub-stages).
-- **Score** — rate each of the 20 POSI v2.0 principles across Governance,
-  Sustainability, and Insurance, with a live-updating compliance summary.
+- **Classify** — tag the infrastructure against a research activities
+  taxonomy (research life cycle activities plus related activities such as
+  managing, documenting, reviewing, publishing, and evaluating), each with
+  its own icon.
+- **Score** — rate every principle of the selected framework(s), with a
+  live-updating compliance summary per framework.
 - **Export as JSON** — download your results and reload them later to
   continue or revise an assessment.
 - **Export as PDF** — download a report of the full assessment.
-- **Certification badge** — download a doughnut-style SVG/PNG badge
-  summarizing the score, suitable for hosting on the infrastructure's own
-  site.
+- **Assessment badge** — download a doughnut-style SVG/PNG badge
+  summarizing the score for the active framework, including the classified
+  activities as small icons, suitable for hosting on the infrastructure's
+  own site.
 
 ## Usage
 
