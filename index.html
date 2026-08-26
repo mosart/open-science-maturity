@@ -202,16 +202,15 @@
                 margin-bottom: var(--space-2);
             }
 
-            #watermark {
-                position: fixed;
-                bottom: 50%;
-                left: 20%;
-                opacity: 0.3;
-                z-index: 99;
-                color: black;
-                font-size: 36pt;
-                font-weight: bold;
-                transform: rotate(-45deg);
+            .draft-label {
+                margin-left: 8pt;
+                padding: 1pt 6pt;
+                font-size: 9pt;
+                font-weight: normal;
+                color: var(--warning);
+                border: 1pt solid var(--warning);
+                border-radius: 3pt;
+                vertical-align: middle;
             }
 
             @media print {
@@ -459,8 +458,6 @@
     
     <body>
 
-        <span id="watermark">DRAFT – WORK IN PROGRESS</span>
-
         <div data-sidebar-layout id="app-shell">
             <aside data-sidebar>
                 <header>
@@ -504,7 +501,7 @@
                     const summary = document.createElement("summary");
                     const a = document.createElement("a");
                     a.href = "#framework-" + framework.id;
-                    a.textContent = framework.title;
+                    a.textContent = framework.title + (framework.draft ? " (draft)" : "");
                     summary.appendChild(a);
                     a.addEventListener("click", (e) => {
                         e.stopPropagation();
@@ -653,6 +650,12 @@
                 section.id = "framework-" + framework.id;
                 const h2 = document.createElement("h2");
                 h2.textContent = framework.title;
+                if (framework.draft) {
+                    const draftLabel = document.createElement("span");
+                    draftLabel.className = "draft-label";
+                    draftLabel.textContent = "Draft – work in progress";
+                    h2.appendChild(draftLabel);
+                }
                 section.appendChild(h2);
 
                 const desc = document.createElement("p");
