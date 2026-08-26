@@ -474,6 +474,7 @@
 
         <script id="app-render">
             let state = initial_state();
+            let activeFrameworkId = FRAMEWORKS[0].id;
 
             function render() {
                 const app = document.getElementById("app");
@@ -505,12 +506,21 @@
                     a.href = "#framework-" + framework.id;
                     a.textContent = framework.title;
                     summary.appendChild(a);
-                    a.addEventListener("click", (e) => e.stopPropagation());
+                    a.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        activeFrameworkId = framework.id;
+                        update_badge();
+                    });
                     groupDetails.appendChild(summary);
 
                     const subUl = document.createElement("ul");
                     framework.sections.forEach((section) => {
-                        subUl.appendChild(render_nav_link("#" + posi_section_id(section), section.section));
+                        const subLink = render_nav_link("#" + posi_section_id(section), section.section);
+                        subLink.querySelector("a").addEventListener("click", () => {
+                            activeFrameworkId = framework.id;
+                            update_badge();
+                        });
+                        subUl.appendChild(subLink);
                     });
                     groupDetails.appendChild(subUl);
 
@@ -969,11 +979,12 @@
                 detailsOpenBeforePrint = null;
             });
 
-            const RING_CONFIG = [
-                { section: "Governance", radius: 34 },
-                { section: "Sustainability", radius: 48 },
-                { section: "Insurance", radius: 62 },
-            ];
+            function ring_config_for(framework) {
+                return framework.sections.map((section, i) => ({
+                    section: section.section,
+                    radius: 34 + i * 14,
+                }));
+            }
 
             const STATUS_COLOR_VAR = {
                 compliant: "--compliant",
@@ -1003,12 +1014,12 @@
                 const ringCenterY = 140;
                 const strokeWidth = 10;
                 let circles = "";
-                const framework = FRAMEWORKS.find((f) => f.id === "posi");
-                RING_CONFIG.forEach((ring) => {
+                const framework = FRAMEWORKS.find((f) => f.id === activeFrameworkId);
+                ring_config_for(framework).forEach((ring) => {
                     const section = framework.sections.find((s) => s.section === ring.section);
                     const offsets = ring_segment_offsets(ring.radius, section.principles.length);
                     section.principles.forEach((principle, i) => {
-                        const status = state.frameworks.posi[principle.id].status;
+                        const status = state.frameworks[framework.id][principle.id].status;
                         const color = status_color(status);
                         const off = offsets[i];
                         circles +=
@@ -1018,13 +1029,14 @@
                             '" transform="rotate(-90 ' + center + " " + ringCenterY + ')" />';
                     });
                 });
-                const summary = compute_summary(state, "posi");
+                const summary = compute_summary(state, framework.id);
                 const name = escape_xml(state.name || "Unnamed infrastructure");
                 const date = escape_xml(state.assessedOn || "");
+                const badgeTitle = escape_xml(framework.shortName + " Compliance");
                 return (
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + " " + height + '" width="' + width + '" height="' + height + '">' +
                     '<rect width="' + width + '" height="' + height + '" fill="white" />' +
-                    '<text x="' + center + '" y="24" text-anchor="middle" font-size="12" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">POSI Compliance</text>' +
+                    '<text x="' + center + '" y="24" text-anchor="middle" font-size="12" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">' + badgeTitle + "</text>" +
                     circles +
                     '<text x="' + center + '" y="' + (ringCenterY + 7) + '" text-anchor="middle" font-size="26" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
                     '<text x="' + center + '" y="228" text-anchor="middle" font-size="11" font-family="&quot;Source Sans 3&quot;, sans-serif">' + name + "</text>" +
@@ -1042,18 +1054,18 @@
             }
 
             function build_badge_hovercard_html(state) {
-                const summary = compute_summary(state, "posi");
+                const framework = FRAMEWORKS.find((f) => f.id === activeFrameworkId);
+                const summary = compute_summary(state, framework.id);
                 const name = state.name || "Unnamed infrastructure";
                 let html = "<strong>" + escape_xml(name) + "</strong>";
                 html += "<div>Assessed " + escape_xml(state.assessedOn) + "</div>";
-                html += "<div>Overall: " + summary.percentCompliant + "%</div>";
-                const framework = FRAMEWORKS.find((f) => f.id === "posi");
+                html += "<div>" + escape_xml(framework.shortName) + " overall: " + summary.percentCompliant + "%</div>";
                 framework.sections.forEach((section) => {
                     let compliant = 0;
                     let progress = 0;
                     let nonCompliant = 0;
                     section.principles.forEach((principle) => {
-                        const status = state.frameworks.posi[principle.id].status;
+                        const status = state.frameworks[framework.id][principle.id].status;
                         if (status === "compliant") compliant++;
                         else if (status === "progress") progress++;
                         else if (status === "non-compliant") nonCompliant++;
