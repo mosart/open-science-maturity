@@ -50,6 +50,12 @@
             }
 
             h3 {
+                font-size: large;
+                margin-left: 20pt;
+                margin-bottom: 4pt;
+            }
+
+            h4 {
                 font-size: medium;
                 margin-bottom: 0pt;
             }
@@ -91,6 +97,11 @@
                 outline-offset: 2px;
             }
 
+            .status-label {
+                margin: 4pt 0 0;
+                font-weight: bold;
+            }
+
             textarea.notes {
                 width: 100%;
                 min-height: 40pt;
@@ -108,10 +119,6 @@
             #summary-heading {
                 font-size: large;
                 font-weight: bold;
-            }
-
-            .taxonomy-group {
-                margin-left: 16pt;
             }
 
             .classify-columns {
@@ -159,7 +166,8 @@
             .hovercard {
                 position: absolute;
                 left: 0;
-                top: 100%;
+                right: 0;
+                bottom: 100%;
                 z-index: 10;
                 background: var(--card);
                 color: var(--foreground);
@@ -167,7 +175,6 @@
                 border-radius: 4pt;
                 padding: 8pt;
                 font-size: 9pt;
-                width: 220pt;
                 opacity: 0;
                 visibility: hidden;
                 transition: opacity 0.15s ease;
@@ -198,6 +205,7 @@
 
             @media print {
                 #sidebar-footer button,
+                #export-import-accordion,
                 [data-sidebar-toggle],
                 aside[data-sidebar] > header,
                 aside[data-sidebar] > nav {
@@ -225,6 +233,7 @@
             }
 
             body.printing #sidebar-footer button,
+            body.printing #export-import-accordion,
             body.printing [data-sidebar-toggle],
             body.printing aside[data-sidebar] > header,
             body.printing aside[data-sidebar] > nav,
@@ -362,7 +371,7 @@
             }
 
             function compute_summary(state, frameworkId) {
-                const entries = Object.values(state.frameworks[frameworkId]);
+                const entries = Object.values(state.frameworks[frameworkId] || {});
                 const scored = entries.filter((e) => e.status !== null);
                 const compliant = scored.filter((e) => e.status === "compliant").length;
                 const progress = scored.filter((e) => e.status === "progress").length;
@@ -403,7 +412,7 @@
                 if (typeof loaded.name === "string") fresh.name = loaded.name;
                 if (typeof loaded.description === "string") fresh.description = loaded.description;
                 if (typeof loaded.url === "string") fresh.url = loaded.url;
-                fresh.assessedOn = typeof loaded.assessedOn === "string" && loaded.assessedOn ? loaded.assessedOn : today_iso_date();
+                fresh.assessedOn = typeof loaded.assessedOn === "string" && /^\d{4}-\d{2}-\d{2}$/.test(loaded.assessedOn) ? loaded.assessedOn : today_iso_date();
                 if (Array.isArray(loaded.activities)) fresh.activities = loaded.activities.slice();
                 if (loaded.frameworks && typeof loaded.frameworks === "object") {
                     Object.keys(fresh.frameworks).forEach((frameworkId) => {
@@ -485,6 +494,7 @@
                     a.href = "#framework-" + framework.id;
                     a.textContent = framework.title;
                     summary.appendChild(a);
+                    a.addEventListener("click", (e) => e.stopPropagation());
                     groupDetails.appendChild(summary);
 
                     const subUl = document.createElement("ul");
@@ -749,9 +759,9 @@
                 details.dataset.principleId = principle.id;
 
                 const summary = document.createElement("summary");
-                const h3 = document.createElement("h3");
-                h3.textContent = principle.title;
-                summary.appendChild(h3);
+                const h4 = document.createElement("h4");
+                h4.textContent = principle.title;
+                summary.appendChild(h4);
                 details.appendChild(summary);
 
                 const text = document.createElement("p");
@@ -781,9 +791,10 @@
                     icon.innerHTML = ICONS[option.status];
                     card.appendChild(icon);
 
-                    const h4 = document.createElement("h4");
-                    h4.textContent = option.label;
-                    card.appendChild(h4);
+                    const label = document.createElement("p");
+                    label.className = "status-label";
+                    label.textContent = option.label;
+                    card.appendChild(label);
                     cards.appendChild(card);
                 });
                 details.appendChild(cards);
