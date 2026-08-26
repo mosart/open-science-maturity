@@ -198,7 +198,7 @@
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
         <script id="app-logic">
-            var ACTIVITIES = {
+            const ACTIVITIES = {
                 primary: {
                     title: "Primary research life cycle activities",
                     items: ["Discover", "Hypothesise", "Plan", "Collect", "Process", "Analyse", "Report"],
@@ -209,17 +209,17 @@
                 },
             };
 
-            var ABOUT_TOOL_HTML =
-                "<p>This tool lets Open Science infrastructure providers, projects, funders, and programme teams reflect on and self-assess how open science values and principles are put into practice in an infrastructure's design, governance, and operation.</p>" +
-                "<p>It grew out of the SPII project's exploration of a shared self-assessment approach for open science infrastructures. Rather than building a bespoke framework from scratch, we chose to begin with an existing, community-governed framework — the <a href=\"https://openscholarlyinfrastructure.org/\">Principles of Open Scholarly Infrastructure (POSI)</a> — so infrastructures can assess themselves against criteria the wider community already recognises, and so results can be compared and shared. The tool is designed to support additional assessment frameworks over time, not just POSI.</p>" +
-                "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO's Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>";
+            const ABOUT_TOOL_HTML =
+                "<p>This tool lets Open Science infrastructure providers, projects, funders, and programme teams reflect on and self-assess how open science values and principles are put into practice in an infrastructure’s design, governance, and operation.</p>" +
+                "<p>It grew out of the SPII project’s exploration of a shared self-assessment approach for open science infrastructures. Rather than building a bespoke framework from scratch, we chose to begin with an existing, community-governed framework — the <a href=\"https://openscholarlyinfrastructure.org/\">Principles of Open Scholarly Infrastructure (POSI)</a> — so infrastructures can assess themselves against criteria the wider community already recognises, and so results can be compared and shared. The tool is designed to support additional assessment frameworks over time, not just POSI.</p>" +
+                "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO’s Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>";
 
             function today_iso_date() {
                 const d = new Date();
                 return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
             }
 
-            var POSI = [
+            const POSI = [
                 {
                     section: "Governance",
                     sourceUrl: "https://openscholarlyinfrastructure.org/#governance",
@@ -260,14 +260,14 @@
                 },
             ];
 
-            var FRAMEWORKS = [
+            const FRAMEWORKS = [
                 {
                     id: "posi",
                     title: "POSI v2.0 Assessment",
                     shortName: "POSI",
                     description: "A community-maintained framework covering governance, sustainability, and insurance against lock-in for scholarly infrastructure.",
                     aboutHtml:
-                        "<p>The Principles of Open Scholarly Infrastructure (POSI) is a community-maintained framework (v2.0, released October 2025) covering three areas: <strong>Governance</strong> (who's accountable and how), <strong>Sustainability</strong> (financial and operational resilience), and <strong>Insurance</strong> (protection against lock-in or failure — open source, open data, patent non-assertion). Read the full principles at <a href=\"https://openscholarlyinfrastructure.org/\">openscholarlyinfrastructure.org</a>.</p>" +
+                        "<p>The Principles of Open Scholarly Infrastructure (POSI) is a community-maintained framework (v2.0, released October 2025) covering three areas: <strong>Governance</strong> (who’s accountable and how), <strong>Sustainability</strong> (financial and operational resilience), and <strong>Insurance</strong> (protection against lock-in or failure — open source, open data, patent non-assertion). Read the full principles at <a href=\"https://openscholarlyinfrastructure.org/\">openscholarlyinfrastructure.org</a>.</p>" +
                         "<p>Cite as: POSI Adopters (2025), <em>The Principles of Open Scholarly Infrastructure</em>, <a href=\"https://doi.org/10.14454/G8WV-VM65\">https://doi.org/10.14454/G8WV-VM65</a>.</p>",
                     sections: POSI,
                 },
