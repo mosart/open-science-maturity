@@ -760,7 +760,7 @@
             }
 
             function section_id(frameworkId, section) {
-                return frameworkId + "-" + section.section.toLowerCase();
+                return frameworkId + "-" + section.section.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
             }
 
             function render_framework_content_section(section, frameworkId) {
@@ -983,9 +983,11 @@
             });
 
             function ring_config_for(framework) {
+                const count = framework.sections.length;
+                const step = count > 1 ? Math.min(14, (76 - 34) / (count - 1)) : 14;
                 return framework.sections.map((section, i) => ({
-                    section: section.section,
-                    radius: 34 + i * 14,
+                    section: section,
+                    radius: 34 + i * step,
                 }));
             }
 
@@ -1019,7 +1021,7 @@
                 let circles = "";
                 const framework = FRAMEWORKS.find((f) => f.id === activeFrameworkId);
                 ring_config_for(framework).forEach((ring) => {
-                    const section = framework.sections.find((s) => s.section === ring.section);
+                    const section = ring.section;
                     const offsets = ring_segment_offsets(ring.radius, section.principles.length);
                     section.principles.forEach((principle, i) => {
                         const status = state.frameworks[framework.id][principle.id].status;
