@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: Open Science infrastructure maturity assessment
+abstract: >-
+  A self-assessment tool for Open Science infrastructures against the
+  Principles of Open Scholarly Infrastructure (POSI) v2.0.
+type: software
+authors:
+  - given-names: Till
+    family-names: Bey
+    affiliation: SURF
+  - given-names: Maurice
+    family-names: Vanderfeesten
+  - given-names: Sander
+    family-names: Bosch
+repository-code: https://github.com/mosart/open-science-maturity
+license: EUPL-1.2
