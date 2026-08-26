@@ -198,16 +198,28 @@
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
         <script id="app-logic">
-            const ACTIVITIES = [
-                "Manage & Organise",
-                { group: "Research Lifecycle", items: ["Discover", "Hypothesise", "Plan", "Collect", "Process", "Analyse", "Report"] },
-                "Document & Preserve",
-                "Review & Curate",
-                "Publish & Communicate",
-                "Evaluate & Monitor",
-            ];
+            var ACTIVITIES = {
+                primary: {
+                    title: "Primary research life cycle activities",
+                    items: ["Discover", "Hypothesise", "Plan", "Collect", "Process", "Analyse", "Report"],
+                },
+                related: {
+                    title: "Research related activities",
+                    items: ["Manage & Organise", "Document & Preserve", "Review & Curate", "Publish & Communicate", "Evaluate & Monitor"],
+                },
+            };
 
-            const POSI = [
+            var ABOUT_TOOL_HTML =
+                "<p>This tool lets Open Science infrastructure providers, projects, funders, and programme teams reflect on and self-assess how open science values and principles are put into practice in an infrastructure's design, governance, and operation.</p>" +
+                "<p>It grew out of the SPII project's exploration of a shared self-assessment approach for open science infrastructures. Rather than building a bespoke framework from scratch, we chose to begin with an existing, community-governed framework — the <a href=\"https://openscholarlyinfrastructure.org/\">Principles of Open Scholarly Infrastructure (POSI)</a> — so infrastructures can assess themselves against criteria the wider community already recognises, and so results can be compared and shared. The tool is designed to support additional assessment frameworks over time, not just POSI.</p>" +
+                "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO's Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>";
+
+            function today_iso_date() {
+                const d = new Date();
+                return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+            }
+
+            var POSI = [
                 {
                     section: "Governance",
                     sourceUrl: "https://openscholarlyinfrastructure.org/#governance",
@@ -248,18 +260,42 @@
                 },
             ];
 
+            var FRAMEWORKS = [
+                {
+                    id: "posi",
+                    title: "POSI v2.0 Assessment",
+                    shortName: "POSI",
+                    description: "A community-maintained framework covering governance, sustainability, and insurance against lock-in for scholarly infrastructure.",
+                    aboutHtml:
+                        "<p>The Principles of Open Scholarly Infrastructure (POSI) is a community-maintained framework (v2.0, released October 2025) covering three areas: <strong>Governance</strong> (who's accountable and how), <strong>Sustainability</strong> (financial and operational resilience), and <strong>Insurance</strong> (protection against lock-in or failure — open source, open data, patent non-assertion). Read the full principles at <a href=\"https://openscholarlyinfrastructure.org/\">openscholarlyinfrastructure.org</a>.</p>" +
+                        "<p>Cite as: POSI Adopters (2025), <em>The Principles of Open Scholarly Infrastructure</em>, <a href=\"https://doi.org/10.14454/G8WV-VM65\">https://doi.org/10.14454/G8WV-VM65</a>.</p>",
+                    sections: POSI,
+                },
+            ];
+
             function initial_state() {
-                const posi = {};
-                POSI.forEach((section) => {
-                    section.principles.forEach((principle) => {
-                        posi[principle.id] = { status: null, notes: "" };
+                const frameworks = {};
+                FRAMEWORKS.forEach((framework) => {
+                    const entries = {};
+                    framework.sections.forEach((section) => {
+                        section.principles.forEach((principle) => {
+                            entries[principle.id] = { status: null, notes: "" };
+                        });
                     });
+                    frameworks[framework.id] = entries;
                 });
-                return { name: "", activities: [], posi };
+                return {
+                    name: "",
+                    description: "",
+                    url: "",
+                    assessedOn: today_iso_date(),
+                    activities: [],
+                    frameworks,
+                };
             }
 
-            function compute_summary(state) {
-                const entries = Object.values(state.posi);
+            function compute_summary(state, frameworkId) {
+                const entries = Object.values(state.frameworks[frameworkId]);
                 const scored = entries.filter((e) => e.status !== null);
                 const compliant = scored.filter((e) => e.status === "compliant").length;
                 const progress = scored.filter((e) => e.status === "progress").length;
@@ -276,25 +312,43 @@
             }
 
             function build_export_object(state) {
-                const posi = {};
-                Object.keys(state.posi).forEach((id) => {
-                    posi[id] = { status: state.posi[id].status, notes: state.posi[id].notes };
+                const frameworks = {};
+                Object.keys(state.frameworks).forEach((frameworkId) => {
+                    const entries = {};
+                    Object.keys(state.frameworks[frameworkId]).forEach((id) => {
+                        entries[id] = { status: state.frameworks[frameworkId][id].status, notes: state.frameworks[frameworkId][id].notes };
+                    });
+                    frameworks[frameworkId] = entries;
                 });
-                return { name: state.name, activities: state.activities.slice(), posi };
+                return {
+                    name: state.name,
+                    description: state.description,
+                    url: state.url,
+                    assessedOn: state.assessedOn,
+                    activities: state.activities.slice(),
+                    frameworks,
+                };
             }
 
             function merge_loaded_state(loaded) {
                 const fresh = initial_state();
                 if (!loaded || typeof loaded !== "object") return fresh;
                 if (typeof loaded.name === "string") fresh.name = loaded.name;
+                if (typeof loaded.description === "string") fresh.description = loaded.description;
+                if (typeof loaded.url === "string") fresh.url = loaded.url;
+                fresh.assessedOn = typeof loaded.assessedOn === "string" && loaded.assessedOn ? loaded.assessedOn : today_iso_date();
                 if (Array.isArray(loaded.activities)) fresh.activities = loaded.activities.slice();
-                if (loaded.posi && typeof loaded.posi === "object") {
-                    Object.keys(fresh.posi).forEach((id) => {
-                        const entry = loaded.posi[id];
-                        if (entry && typeof entry === "object") {
-                            fresh.posi[id].status = ["compliant", "progress", "non-compliant"].includes(entry.status) ? entry.status : null;
-                            fresh.posi[id].notes = typeof entry.notes === "string" ? entry.notes : "";
-                        }
+                if (loaded.frameworks && typeof loaded.frameworks === "object") {
+                    Object.keys(fresh.frameworks).forEach((frameworkId) => {
+                        const loadedFramework = loaded.frameworks[frameworkId];
+                        if (!loadedFramework || typeof loadedFramework !== "object") return;
+                        Object.keys(fresh.frameworks[frameworkId]).forEach((id) => {
+                            const entry = loadedFramework[id];
+                            if (entry && typeof entry === "object") {
+                                fresh.frameworks[frameworkId][id].status = ["compliant", "progress", "non-compliant"].includes(entry.status) ? entry.status : null;
+                                fresh.frameworks[frameworkId][id].notes = typeof entry.notes === "string" ? entry.notes : "";
+                            }
+                        });
                     });
                 }
                 return fresh;
@@ -444,23 +498,19 @@
                 section.appendChild(p);
 
                 const list = document.createElement("div");
-                ACTIVITIES.forEach((item) => {
-                    if (typeof item === "string") {
-                        list.appendChild(render_activity_checkbox(item, item));
-                    } else {
-                        const groupWrap = document.createElement("div");
-                        const groupLabel = document.createElement("strong");
-                        groupLabel.textContent = item.group;
-                        groupWrap.appendChild(groupLabel);
-                        const groupList = document.createElement("div");
-                        groupList.className = "taxonomy-group";
-                        item.items.forEach((sub) => {
-                            const value = item.group + " > " + sub;
-                            groupList.appendChild(render_activity_checkbox(value, sub));
-                        });
-                        groupWrap.appendChild(groupList);
-                        list.appendChild(groupWrap);
-                    }
+                [ACTIVITIES.primary, ACTIVITIES.related].forEach((group) => {
+                    const groupWrap = document.createElement("div");
+                    const groupLabel = document.createElement("strong");
+                    groupLabel.textContent = group.title;
+                    groupWrap.appendChild(groupLabel);
+                    const groupList = document.createElement("div");
+                    groupList.className = "taxonomy-group";
+                    group.items.forEach((item) => {
+                        const value = group.title + " > " + item;
+                        groupList.appendChild(render_activity_checkbox(value, item));
+                    });
+                    groupWrap.appendChild(groupList);
+                    list.appendChild(groupWrap);
                 });
                 section.appendChild(list);
                 return section;
@@ -526,8 +576,8 @@
                     card.dataset.status = option.status;
                     card.setAttribute("role", "button");
                     card.setAttribute("tabindex", "0");
-                    card.setAttribute("aria-pressed", state.posi[principle.id].status === option.status ? "true" : "false");
-                    if (state.posi[principle.id].status === option.status) {
+                    card.setAttribute("aria-pressed", state.frameworks.posi[principle.id].status === option.status ? "true" : "false");
+                    if (state.frameworks.posi[principle.id].status === option.status) {
                         card.classList.add("selected");
                     }
                     const h4 = document.createElement("h4");
@@ -540,7 +590,7 @@
                 const notes = document.createElement("textarea");
                 notes.className = "notes";
                 notes.placeholder = "Explain your reasoning (optional)";
-                notes.value = state.posi[principle.id].notes;
+                notes.value = state.frameworks.posi[principle.id].notes;
                 details.appendChild(notes);
 
                 return details;
@@ -574,10 +624,10 @@
             }
 
             function set_status(principleId, status) {
-                state.posi[principleId].status = state.posi[principleId].status === status ? null : status;
+                state.frameworks.posi[principleId].status = state.frameworks.posi[principleId].status === status ? null : status;
                 const details = document.querySelector('[data-principle-id="' + principleId + '"]');
                 details.querySelectorAll(".status-card").forEach((card) => {
-                    const isSelected = card.dataset.status === state.posi[principleId].status;
+                    const isSelected = card.dataset.status === state.frameworks.posi[principleId].status;
                     card.classList.toggle("selected", isSelected);
                     card.setAttribute("aria-pressed", isSelected ? "true" : "false");
                 });
@@ -586,7 +636,7 @@
             }
 
             function update_summary() {
-                const summary = compute_summary(state);
+                const summary = compute_summary(state, "posi");
                 document.getElementById("summary-heading").textContent = "Overall: " + summary.percentCompliant + "% compliant";
                 document.getElementById("summary-counts").textContent =
                     summary.compliant + " compliant · " + summary.progress + " making progress · " +
@@ -727,7 +777,7 @@
                     const section = POSI.find((s) => s.section === ring.section);
                     const offsets = ring_segment_offsets(ring.radius, section.principles.length);
                     section.principles.forEach((principle, i) => {
-                        const status = state.posi[principle.id].status;
+                        const status = state.frameworks.posi[principle.id].status;
                         const color = status_color(status);
                         const off = offsets[i];
                         circles +=
@@ -737,7 +787,7 @@
                             '" transform="rotate(-90 ' + center + " " + center + ')" />';
                     });
                 });
-                const summary = compute_summary(state);
+                const summary = compute_summary(state, "posi");
                 const name = escape_xml(state.name || "Unnamed infrastructure");
                 return (
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + " " + size + '" width="' + size + '" height="' + size + '">' +
@@ -816,7 +866,7 @@
             appRoot.addEventListener("input", (e) => {
                 if (e.target.matches("textarea.notes")) {
                     const details = e.target.closest("[data-principle-id]");
-                    state.posi[details.dataset.principleId].notes = e.target.value;
+                    state.frameworks.posi[details.dataset.principleId].notes = e.target.value;
                 }
             });
             appRoot.addEventListener("keydown", (e) => {
