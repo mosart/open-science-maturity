@@ -151,6 +151,35 @@
                 height: auto;
             }
 
+            .badge-wrap {
+                position: relative;
+                display: inline-block;
+            }
+
+            .hovercard {
+                position: absolute;
+                left: 0;
+                top: 100%;
+                z-index: 10;
+                background: var(--card);
+                color: var(--foreground);
+                border: 1pt solid var(--border);
+                border-radius: 4pt;
+                padding: 8pt;
+                font-size: 9pt;
+                width: 220pt;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.15s ease;
+                pointer-events: none;
+            }
+
+            .badge-wrap:hover .hovercard,
+            .badge-wrap:focus-within .hovercard {
+                opacity: 1;
+                visibility: visible;
+            }
+
             [data-sidebar-toggle] {
                 margin-bottom: var(--space-2);
             }
@@ -168,7 +197,6 @@
             }
 
             @media print {
-                #actions,
                 #sidebar-footer button,
                 [data-sidebar-toggle],
                 aside[data-sidebar] > header,
@@ -196,7 +224,6 @@
                 }
             }
 
-            body.printing #actions,
             body.printing #sidebar-footer button,
             body.printing [data-sidebar-toggle],
             body.printing aside[data-sidebar] > header,
@@ -420,7 +447,6 @@
                 app.appendChild(render_header());
                 app.appendChild(render_infra_description_section());
                 FRAMEWORKS.forEach((framework) => app.appendChild(render_framework_section(framework)));
-                app.appendChild(render_actions_section());
                 render_sidebar_nav();
                 render_sidebar_footer();
                 wire_up_events();
@@ -474,12 +500,20 @@
                 footer.innerHTML = "";
 
                 const heading = document.createElement("h3");
-                heading.textContent = "Certification badge";
+                heading.textContent = "Assessment badge";
                 footer.appendChild(heading);
 
+                const badgeWrap = document.createElement("div");
+                badgeWrap.className = "badge-wrap";
+                badgeWrap.tabIndex = 0;
                 const preview = document.createElement("div");
                 preview.id = "badge-preview";
-                footer.appendChild(preview);
+                badgeWrap.appendChild(preview);
+                const hovercard = document.createElement("div");
+                hovercard.id = "badge-hovercard";
+                hovercard.className = "hovercard";
+                badgeWrap.appendChild(hovercard);
+                footer.appendChild(badgeWrap);
 
                 const svgBtn = document.createElement("button");
                 svgBtn.textContent = "Download badge (SVG)";
@@ -490,6 +524,41 @@
                 pngBtn.textContent = "Download badge (PNG)";
                 pngBtn.addEventListener("click", download_badge_png);
                 footer.appendChild(pngBtn);
+
+                footer.appendChild(render_export_import_accordion());
+            }
+
+            function render_export_import_accordion() {
+                const details = document.createElement("details");
+                details.id = "export-import-accordion";
+                const summary = document.createElement("summary");
+                summary.textContent = "Export / import results";
+                details.appendChild(summary);
+
+                const downloadJsonBtn = document.createElement("button");
+                downloadJsonBtn.textContent = "Download results as JSON";
+                downloadJsonBtn.addEventListener("click", download_json);
+                details.appendChild(downloadJsonBtn);
+
+                const loadJsonLabel = document.createElement("label");
+                loadJsonLabel.textContent = "Load JSON: ";
+                const loadJsonInput = document.createElement("input");
+                loadJsonInput.type = "file";
+                loadJsonInput.id = "load-json-input";
+                loadJsonInput.accept = "application/json";
+                loadJsonInput.addEventListener("change", (e) => {
+                    const file = e.target.files[0];
+                    if (file) load_json(file);
+                });
+                loadJsonLabel.appendChild(loadJsonInput);
+                details.appendChild(loadJsonLabel);
+
+                const downloadPdfBtn = document.createElement("button");
+                downloadPdfBtn.textContent = "Download report";
+                downloadPdfBtn.addEventListener("click", download_pdf);
+                details.appendChild(downloadPdfBtn);
+
+                return details;
             }
 
             function render_header() {
@@ -769,36 +838,6 @@
                     summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
             }
 
-            function render_actions_section() {
-                const section = document.createElement("section");
-                section.id = "actions";
-
-                const downloadJsonBtn = document.createElement("button");
-                downloadJsonBtn.textContent = "Download results as JSON";
-                downloadJsonBtn.addEventListener("click", download_json);
-                section.appendChild(downloadJsonBtn);
-
-                const loadJsonLabel = document.createElement("label");
-                loadJsonLabel.textContent = "Load JSON: ";
-                const loadJsonInput = document.createElement("input");
-                loadJsonInput.type = "file";
-                loadJsonInput.id = "load-json-input";
-                loadJsonInput.accept = "application/json";
-                loadJsonInput.addEventListener("change", (e) => {
-                    const file = e.target.files[0];
-                    if (file) load_json(file);
-                });
-                loadJsonLabel.appendChild(loadJsonInput);
-                section.appendChild(loadJsonLabel);
-
-                const downloadPdfBtn = document.createElement("button");
-                downloadPdfBtn.textContent = "Download report";
-                downloadPdfBtn.addEventListener("click", download_pdf);
-                section.appendChild(downloadPdfBtn);
-
-                return section;
-            }
-
             function download_json() {
                 const data = build_export_object(state);
                 const json = JSON.stringify(data, null, 2);
@@ -895,33 +934,38 @@
             }
 
             function build_badge_svg_markup(state) {
-                const size = 200;
-                const center = size / 2;
+                const width = 200;
+                const height = 260;
+                const center = width / 2;
+                const ringCenterY = 140;
                 const strokeWidth = 10;
                 let circles = "";
+                const framework = FRAMEWORKS.find((f) => f.id === "posi");
                 RING_CONFIG.forEach((ring) => {
-                    const section = POSI.find((s) => s.section === ring.section);
+                    const section = framework.sections.find((s) => s.section === ring.section);
                     const offsets = ring_segment_offsets(ring.radius, section.principles.length);
                     section.principles.forEach((principle, i) => {
                         const status = state.frameworks.posi[principle.id].status;
                         const color = status_color(status);
                         const off = offsets[i];
                         circles +=
-                            '<circle cx="' + center + '" cy="' + center + '" r="' + ring.radius +
+                            '<circle cx="' + center + '" cy="' + ringCenterY + '" r="' + ring.radius +
                             '" fill="none" stroke="' + color + '" stroke-width="' + strokeWidth +
                             '" stroke-dasharray="' + off.dasharray + '" stroke-dashoffset="' + off.dashoffset +
-                            '" transform="rotate(-90 ' + center + " " + center + ')" />';
+                            '" transform="rotate(-90 ' + center + " " + ringCenterY + ')" />';
                     });
                 });
                 const summary = compute_summary(state, "posi");
                 const name = escape_xml(state.name || "Unnamed infrastructure");
+                const date = escape_xml(state.assessedOn || "");
                 return (
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + " " + size + '" width="' + size + '" height="' + size + '">' +
-                    '<rect width="' + size + '" height="' + size + '" fill="white" />' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + " " + height + '" width="' + width + '" height="' + height + '">' +
+                    '<rect width="' + width + '" height="' + height + '" fill="white" />' +
+                    '<text x="' + center + '" y="24" text-anchor="middle" font-size="12" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">POSI Compliance</text>' +
                     circles +
-                    '<text x="' + center + '" y="' + (center - 8) + '" text-anchor="middle" font-size="20" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
-                    '<text x="' + center + '" y="' + (center + 6) + '" text-anchor="middle" font-size="7" font-family="&quot;Source Sans 3&quot;, sans-serif">' + summary.scoredCount + "/" + summary.totalCount + " scored</text>" +
-                    '<text x="' + center + '" y="' + (center + 16) + '" text-anchor="middle" font-size="7" font-family="&quot;Source Sans 3&quot;, sans-serif">' + name + "</text>" +
+                    '<text x="' + center + '" y="' + (ringCenterY + 7) + '" text-anchor="middle" font-size="26" font-family="&quot;Source Sans 3&quot;, sans-serif" font-weight="bold">' + summary.percentCompliant + "%</text>" +
+                    '<text x="' + center + '" y="228" text-anchor="middle" font-size="11" font-family="&quot;Source Sans 3&quot;, sans-serif">' + name + "</text>" +
+                    '<text x="' + center + '" y="244" text-anchor="middle" font-size="10" font-family="&quot;Source Sans 3&quot;, sans-serif">' + date + "</text>" +
                     "</svg>"
                 );
             }
@@ -930,6 +974,30 @@
                 const container = document.getElementById("badge-preview");
                 if (!container) return;
                 container.innerHTML = build_badge_svg_markup(state);
+                const hovercard = document.getElementById("badge-hovercard");
+                if (hovercard) hovercard.innerHTML = build_badge_hovercard_html(state);
+            }
+
+            function build_badge_hovercard_html(state) {
+                const summary = compute_summary(state, "posi");
+                const name = state.name || "Unnamed infrastructure";
+                let html = "<strong>" + escape_xml(name) + "</strong>";
+                html += "<div>Assessed " + escape_xml(state.assessedOn) + "</div>";
+                html += "<div>Overall: " + summary.percentCompliant + "%</div>";
+                const framework = FRAMEWORKS.find((f) => f.id === "posi");
+                framework.sections.forEach((section) => {
+                    let compliant = 0;
+                    let progress = 0;
+                    let nonCompliant = 0;
+                    section.principles.forEach((principle) => {
+                        const status = state.frameworks.posi[principle.id].status;
+                        if (status === "compliant") compliant++;
+                        else if (status === "progress") progress++;
+                        else if (status === "non-compliant") nonCompliant++;
+                    });
+                    html += "<div>" + escape_xml(section.section) + ": " + compliant + "✓ " + progress + "◐ " + nonCompliant + "✗</div>";
+                });
+                return html;
             }
 
             function trigger_download(href, filename) {
@@ -957,7 +1025,7 @@
                 img.onload = () => {
                     const canvas = document.createElement("canvas");
                     canvas.width = 200;
-                    canvas.height = 200;
+                    canvas.height = 260;
                     const ctx = canvas.getContext("2d");
                     ctx.drawImage(img, 0, 0);
                     URL.revokeObjectURL(url);
