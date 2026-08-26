@@ -515,7 +515,7 @@
 
                     const subUl = document.createElement("ul");
                     framework.sections.forEach((section) => {
-                        const subLink = render_nav_link("#" + posi_section_id(section), section.section);
+                        const subLink = render_nav_link("#" + section_id(framework.id, section), section.section);
                         subLink.querySelector("a").addEventListener("click", () => {
                             activeFrameworkId = framework.id;
                             update_badge();
@@ -756,13 +756,13 @@
                 return label;
             }
 
-            function posi_section_id(section) {
-                return "posi-" + section.section.toLowerCase();
+            function section_id(frameworkId, section) {
+                return frameworkId + "-" + section.section.toLowerCase();
             }
 
             function render_framework_content_section(section, frameworkId) {
                 const el = document.createElement("section");
-                el.id = posi_section_id(section);
+                el.id = section_id(frameworkId, section);
                 const h3 = document.createElement("h3");
                 h3.textContent = section.section;
                 el.appendChild(h3);
