@@ -102,6 +102,17 @@
                 font-weight: bold;
             }
 
+            .status-criteria {
+                font-size: 8pt;
+                margin: 2pt 0 0;
+                font-weight: normal;
+            }
+
+            .improvement-action {
+                margin-top: 6pt;
+                font-style: italic;
+            }
+
             textarea.notes {
                 width: 100%;
                 min-height: 40pt;
@@ -796,6 +807,14 @@
                     label.className = "status-label";
                     label.textContent = option.label;
                     card.appendChild(label);
+
+                    if (principle.criteria && principle.criteria[option.status]) {
+                        const criteriaText = document.createElement("p");
+                        criteriaText.className = "status-criteria";
+                        criteriaText.textContent = principle.criteria[option.status];
+                        card.appendChild(criteriaText);
+                    }
+
                     cards.appendChild(card);
                 });
                 details.appendChild(cards);
@@ -805,6 +824,13 @@
                 notes.placeholder = "Explain your reasoning (optional)";
                 notes.value = state.frameworks[frameworkId][principle.id].notes;
                 details.appendChild(notes);
+
+                if (principle.improvementAction) {
+                    const improvement = document.createElement("p");
+                    improvement.className = "improvement-action";
+                    improvement.textContent = "To improve: " + principle.improvementAction;
+                    details.appendChild(improvement);
+                }
 
                 return details;
             }
