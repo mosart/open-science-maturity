@@ -51,9 +51,34 @@
                 margin-inline: auto;
             }
 
-            aside[data-sidebar] > header h2 {
-                font-size: var(--text-6);
-                font-weight: bold;
+            .topnav-spacer {
+                flex: 1;
+            }
+
+            [role="menuitem"] {
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
+            }
+
+            .menuitem-title {
+                font-weight: var(--font-medium);
+            }
+
+            .menuitem-desc {
+                font-size: var(--text-8);
+                color: var(--muted-foreground);
+            }
+
+            #changelog-section dt {
+                font-weight: var(--font-medium);
+                color: var(--muted-foreground);
+                margin-top: var(--space-3);
+            }
+
+            #changelog-section dd {
+                margin-inline-start: 0;
+                margin-bottom: var(--space-2);
             }
 
             section {
@@ -168,22 +193,10 @@
                 margin-bottom: var(--space-2);
             }
 
-            .draft-label {
-                margin-left: 8pt;
-                padding: 1pt 6pt;
-                font-size: 9pt;
-                font-weight: normal;
-                color: var(--warning);
-                border: 1pt solid var(--warning);
-                border-radius: 3pt;
-                vertical-align: middle;
-            }
-
             @media print {
                 #sidebar-footer button,
-                #export-import-accordion,
                 [data-sidebar-toggle],
-                aside[data-sidebar] > header,
+                nav[data-topnav],
                 aside[data-sidebar] > nav {
                     display: none;
                 }
@@ -209,9 +222,8 @@
             }
 
             body.printing #sidebar-footer button,
-            body.printing #export-import-accordion,
             body.printing [data-sidebar-toggle],
-            body.printing aside[data-sidebar] > header,
+            body.printing nav[data-topnav],
             body.printing aside[data-sidebar] > nav,
             body.printing .status-card:not(.selected) {
                 display: none;
@@ -247,6 +259,54 @@
             .status-card[data-status="compliant"] .status-icon { color: var(--compliant); }
             .status-card[data-status="progress"] .status-icon { color: var(--warning); }
             .status-card[data-status="non-compliant"] .status-icon { color: var(--destructive); }
+
+            [role="tablist"] {
+                margin-bottom: var(--space-4);
+                flex-wrap: wrap;
+            }
+
+            [role="tabpanel"] {
+                background-color: var(--card);
+                color: var(--card-foreground);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-medium);
+                padding: var(--space-6);
+            }
+
+            .nav-status-dot {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                margin-right: var(--space-2);
+                vertical-align: middle;
+                border-radius: 50%;
+                background-color: var(--border);
+            }
+
+            .nav-status-dot[data-status="compliant"] { background-color: var(--compliant); }
+            .nav-status-dot[data-status="progress"] { background-color: var(--warning); }
+            .nav-status-dot[data-status="non-compliant"] { background-color: var(--destructive); }
+
+            @media print {
+                [role="tablist"] {
+                    display: none;
+                }
+                [role="tabpanel"] {
+                    padding: 0;
+                    border: none;
+                    background: none;
+                }
+            }
+
+            body.printing [role="tablist"] {
+                display: none;
+            }
+
+            body.printing [role="tabpanel"] {
+                padding: 0;
+                border: none;
+                background: none;
+            }
         </style>
         <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -266,6 +326,16 @@
                 "<p>This tool lets Open Science infrastructure providers, projects, funders, and programme teams reflect on and self-assess how open science values and principles are put into practice in an infrastructure’s design, governance, and operation.</p>" +
                 "<p>It grew out of the SPII project’s exploration of a shared self-assessment approach for open science infrastructures. Rather than building a bespoke framework from scratch, we chose to begin with an existing, community-governed framework — the <a href=\"https://openscholarlyinfrastructure.org/\">Principles of Open Scholarly Infrastructure (POSI)</a> — so infrastructures can assess themselves against criteria the wider community already recognises, and so results can be compared and shared. The tool is designed to support additional assessment frameworks over time, not just POSI.</p>" +
                 "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO’s Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>";
+
+            const CHANGELOG_HTML =
+                "<dl>" +
+                '<dt>2026-08-27</dt><dd>Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status dot; a top bar with Import/Export menus, including support for importing your own custom assessment framework (JSON).</dd>' +
+                '<dt>2026-08-26</dt><dd>Redesigned sidebar navigation and assessment badge; added support for multiple assessment frameworks side by side, with SPII v0.0.1 (draft) alongside POSI; inline SVG icons for maturity levels and classification activities.</dd>' +
+                '<dt>2026-08-25</dt><dd>Rebuilt around the POSI v2.0 principles as a data-driven framework, with JSON export/reload and a downloadable assessment badge (SVG/PNG).</dd>' +
+                "<dt>2026-08-12</dt><dd>Relicensed under EUPL-1.2, with citation metadata added.</dd>" +
+                "<dt>2026-08-03</dt><dd>Added PDF export, an overall compliance score, and mobile/print styling improvements.</dd>" +
+                "<dt>2026-07-31</dt><dd>First version of the tool.</dd>" +
+                "</dl>";
 
             const ICONS = {
                 compliant: '<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8.5" /><path d="M6 10.5l2.5 2.5L14 7.5" stroke-linecap="round" stroke-linejoin="round" /></svg>',
@@ -421,16 +491,34 @@
                 },
             ];
 
+            function framework_state_slice(framework) {
+                const entries = {};
+                framework.sections.forEach((section) => {
+                    section.principles.forEach((principle) => {
+                        entries[principle.id] = { status: null, notes: "" };
+                    });
+                });
+                return entries;
+            }
+
+            function validate_framework_shape(obj) {
+                if (!obj || typeof obj !== "object") return false;
+                if (typeof obj.id !== "string" || !obj.id) return false;
+                if (typeof obj.title !== "string" || !obj.title) return false;
+                if (!Array.isArray(obj.sections) || obj.sections.length === 0) return false;
+                return obj.sections.every((section) => {
+                    if (!section || typeof section.section !== "string" || !section.section) return false;
+                    if (!Array.isArray(section.principles) || section.principles.length === 0) return false;
+                    return section.principles.every(
+                        (p) => p && typeof p.id === "string" && p.id && typeof p.title === "string" && p.title && typeof p.text === "string"
+                    );
+                });
+            }
+
             function initial_state() {
                 const frameworks = {};
                 FRAMEWORKS.forEach((framework) => {
-                    const entries = {};
-                    framework.sections.forEach((section) => {
-                        section.principles.forEach((principle) => {
-                            entries[principle.id] = { status: null, notes: "" };
-                        });
-                    });
-                    frameworks[framework.id] = entries;
+                    frameworks[framework.id] = framework_state_slice(framework);
                 });
                 return {
                     name: "",
@@ -438,6 +526,7 @@
                     url: "",
                     assessedOn: today_iso_date(),
                     activities: [],
+                    customFrameworks: [],
                     frameworks,
                 };
             }
@@ -474,6 +563,7 @@
                     url: state.url,
                     assessedOn: state.assessedOn,
                     activities: state.activities.slice(),
+                    customFrameworks: state.customFrameworks.slice(),
                     frameworks,
                 };
             }
@@ -486,6 +576,15 @@
                 if (typeof loaded.url === "string") fresh.url = loaded.url;
                 fresh.assessedOn = typeof loaded.assessedOn === "string" && /^\d{4}-\d{2}-\d{2}$/.test(loaded.assessedOn) ? loaded.assessedOn : today_iso_date();
                 if (Array.isArray(loaded.activities)) fresh.activities = loaded.activities.slice();
+                if (Array.isArray(loaded.customFrameworks)) {
+                    const knownIds = FRAMEWORKS.map((f) => f.id);
+                    loaded.customFrameworks.forEach((framework) => {
+                        if (!validate_framework_shape(framework) || knownIds.includes(framework.id)) return;
+                        knownIds.push(framework.id);
+                        fresh.customFrameworks.push(framework);
+                        fresh.frameworks[framework.id] = framework_state_slice(framework);
+                    });
+                }
                 if (loaded.frameworks && typeof loaded.frameworks === "object") {
                     Object.keys(fresh.frameworks).forEach((frameworkId) => {
                         const loadedFramework = loaded.frameworks[frameworkId];
@@ -521,10 +620,45 @@
     <body>
 
         <div data-sidebar-layout id="app-shell">
+            <nav data-topnav>
+                <button type="button" id="sidebar-toggle" data-sidebar-toggle aria-label="Toggle navigation" aria-expanded="false">☰</button>
+                <strong>Open Science Infrastructure Assessment Tool</strong>
+                <span class="topnav-spacer"></span>
+                <ot-dropdown>
+                    <button type="button" popovertarget="import-menu">Import ▾</button>
+                    <div id="import-menu" popover role="menu">
+                        <button type="button" role="menuitem" id="import-report-btn">
+                            <span class="menuitem-title">Import Assessment Report (JSON)</span>
+                            <span class="menuitem-desc">Import an earlier saved assessment</span>
+                        </button>
+                        <button type="button" role="menuitem" id="import-framework-btn">
+                            <span class="menuitem-title">Import Assessment Framework (JSON)</span>
+                            <span class="menuitem-desc">Add another assessment framework to evaluate</span>
+                        </button>
+                        <button type="button" role="menuitem" id="download-template-btn">
+                            <span class="menuitem-title">Download Assessment Framework Template (JSON)</span>
+                            <span class="menuitem-desc">Download a template to create your own assessment framework</span>
+                        </button>
+                    </div>
+                </ot-dropdown>
+                <ot-dropdown>
+                    <button type="button" popovertarget="export-menu">Export ▾</button>
+                    <div id="export-menu" popover role="menu">
+                        <button type="button" role="menuitem" id="export-report-btn">
+                            <span class="menuitem-title">Export Assessment Report (JSON)</span>
+                        </button>
+                        <button type="button" role="menuitem" id="print-report-btn">
+                            <span class="menuitem-title">Print Assessment Report (PDF)</span>
+                        </button>
+                        <button type="button" role="menuitem" id="download-frameworks-btn">
+                            <span class="menuitem-title">Download Assessment Frameworks (JSON)</span>
+                        </button>
+                    </div>
+                </ot-dropdown>
+                <input type="file" id="import-report-input" accept="application/json" hidden>
+                <input type="file" id="import-framework-input" accept="application/json" hidden>
+            </nav>
             <aside data-sidebar>
-                <header>
-                    <h2>Open Science infrastructure Self-assessment Tool</h2>
-                </header>
                 <nav id="sidebar-nav"></nav>
                 <footer id="sidebar-footer"></footer>
             </aside>
@@ -534,13 +668,17 @@
         <script id="app-render">
             let state = initial_state();
             let activeFrameworkId = FRAMEWORKS[0].id;
+            let activeTabId = "infra-description";
+
+            function all_frameworks() {
+                return FRAMEWORKS.concat(state.customFrameworks);
+            }
 
             function render() {
                 const app = document.getElementById("app");
                 app.innerHTML = "";
                 app.appendChild(render_header());
-                app.appendChild(render_infra_description_section());
-                FRAMEWORKS.forEach((framework) => app.appendChild(render_framework_section(framework)));
+                app.appendChild(render_tabs());
                 render_sidebar_nav();
                 render_sidebar_footer();
                 wire_up_events();
@@ -548,38 +686,120 @@
                 update_badge();
             }
 
+            function tab_defs() {
+                return [{ id: "infra-description", label: "OS Infrastructure Description" }].concat(
+                    all_frameworks().map((framework) => ({ id: framework.id, label: framework.title }))
+                );
+            }
+
+            function tab_label_text(tabId, baseLabel) {
+                const framework = all_frameworks().find((f) => f.id === tabId);
+                if (!framework) return baseLabel;
+                const summary = compute_summary(state, framework.id);
+                return baseLabel + " (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+            }
+
+            function render_tabs() {
+                const wrap = document.createElement("div");
+                wrap.id = "main-tabs";
+
+                const tablist = document.createElement("div");
+                tablist.setAttribute("role", "tablist");
+
+                const defs = tab_defs();
+                defs.forEach((def) => {
+                    const tab = document.createElement("button");
+                    tab.type = "button";
+                    tab.setAttribute("role", "tab");
+                    tab.id = "tab-" + def.id;
+                    tab.setAttribute("aria-controls", "tabpanel-" + def.id);
+                    tab.setAttribute("aria-selected", def.id === activeTabId ? "true" : "false");
+                    tab.dataset.tabId = def.id;
+                    tab.textContent = tab_label_text(def.id, def.label);
+                    tab.addEventListener("click", () => switch_tab(def.id));
+                    tablist.appendChild(tab);
+                });
+                wrap.appendChild(tablist);
+
+                const panelContent = {
+                    "infra-description": () => render_infra_description_section(),
+                };
+                all_frameworks().forEach((framework) => {
+                    panelContent[framework.id] = () => render_framework_section(framework);
+                });
+
+                defs.forEach((def) => {
+                    const panel = document.createElement("div");
+                    panel.setAttribute("role", "tabpanel");
+                    panel.id = "tabpanel-" + def.id;
+                    panel.setAttribute("aria-labelledby", "tab-" + def.id);
+                    panel.hidden = def.id !== activeTabId;
+                    panel.appendChild(panelContent[def.id]());
+                    wrap.appendChild(panel);
+                });
+
+                return wrap;
+            }
+
+            function switch_tab(tabId) {
+                activeTabId = tabId;
+                document.querySelectorAll('[role="tab"]').forEach((tab) => {
+                    tab.setAttribute("aria-selected", tab.dataset.tabId === tabId ? "true" : "false");
+                });
+                document.querySelectorAll('[role="tabpanel"]').forEach((panel) => {
+                    panel.hidden = panel.id !== "tabpanel-" + tabId;
+                });
+                if (all_frameworks().some((f) => f.id === tabId)) {
+                    activeFrameworkId = tabId;
+                    update_badge();
+                }
+            }
+
+            function navigate_to(tabId, anchorId) {
+                if (tabId) switch_tab(tabId);
+                const target = document.getElementById(anchorId);
+                if (!target) return;
+                if (target.tagName === "DETAILS") target.open = true;
+                target.scrollIntoView({ block: "start" });
+            }
+
             function render_sidebar_nav() {
                 const nav = document.getElementById("sidebar-nav");
                 nav.innerHTML = "";
                 const ul = document.createElement("ul");
 
-                ul.appendChild(render_nav_link("#about-section", "About"));
-                ul.appendChild(render_nav_link("#infra-description-section", "OS Infrastructure Description"));
+                ul.appendChild(render_nav_link("about-section", "About", null));
+                ul.appendChild(render_nav_link("changelog-section", "Changelog", null));
+                ul.appendChild(render_nav_link("infra-description-section", "OS Infrastructure Description", "infra-description"));
 
-                FRAMEWORKS.forEach((framework) => {
+                all_frameworks().forEach((framework) => {
                     const li = document.createElement("li");
                     const groupDetails = document.createElement("details");
-                    groupDetails.open = true;
+                    groupDetails.open = !framework.draft;
                     const summary = document.createElement("summary");
                     const a = document.createElement("a");
                     a.href = "#framework-" + framework.id;
                     a.textContent = framework.title + (framework.draft ? " (draft)" : "");
                     summary.appendChild(a);
                     a.addEventListener("click", (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        activeFrameworkId = framework.id;
-                        update_badge();
+                        navigate_to(framework.id, "framework-" + framework.id);
                     });
                     groupDetails.appendChild(summary);
 
                     const subUl = document.createElement("ul");
                     framework.sections.forEach((section) => {
-                        const subLink = render_nav_link("#" + section_id(framework.id, section), section.section);
-                        subLink.querySelector("a").addEventListener("click", () => {
-                            activeFrameworkId = framework.id;
-                            update_badge();
+                        const sectionLi = render_nav_link(section_id(framework.id, section), section.section, framework.id);
+
+                        const principleUl = document.createElement("ul");
+                        principleUl.className = "nav-principle-list";
+                        section.principles.forEach((principle) => {
+                            principleUl.appendChild(render_principle_nav_link(framework.id, principle));
                         });
-                        subUl.appendChild(subLink);
+                        sectionLi.appendChild(principleUl);
+
+                        subUl.appendChild(sectionLi);
                     });
                     groupDetails.appendChild(subUl);
 
@@ -590,11 +810,34 @@
                 nav.appendChild(ul);
             }
 
-            function render_nav_link(href, label) {
+            function render_nav_link(anchorId, label, tabId) {
                 const li = document.createElement("li");
                 const a = document.createElement("a");
-                a.href = href;
+                a.href = "#" + anchorId;
                 a.textContent = label;
+                a.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    navigate_to(tabId, anchorId);
+                });
+                li.appendChild(a);
+                return li;
+            }
+
+            function render_principle_nav_link(frameworkId, principle) {
+                const anchorId = "principle-" + frameworkId + "-" + principle.id;
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = "#" + anchorId;
+                const dot = document.createElement("span");
+                dot.className = "nav-status-dot";
+                dot.id = "nav-dot-" + frameworkId + "-" + principle.id;
+                dot.dataset.status = state.frameworks[frameworkId][principle.id].status || "unanswered";
+                a.appendChild(dot);
+                a.appendChild(document.createTextNode(principle.title));
+                a.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    navigate_to(frameworkId, anchorId);
+                });
                 li.appendChild(a);
                 return li;
             }
@@ -628,58 +871,10 @@
                 pngBtn.textContent = "Download badge (PNG)";
                 pngBtn.addEventListener("click", download_badge_png);
                 footer.appendChild(pngBtn);
-
-                footer.appendChild(render_export_import_accordion());
-            }
-
-            function render_export_import_accordion() {
-                const details = document.createElement("details");
-                details.id = "export-import-accordion";
-                const summary = document.createElement("summary");
-                summary.textContent = "Export / import results";
-                details.appendChild(summary);
-
-                const downloadJsonBtn = document.createElement("button");
-                downloadJsonBtn.textContent = "Download results as JSON";
-                downloadJsonBtn.addEventListener("click", download_json);
-                details.appendChild(downloadJsonBtn);
-
-                const loadJsonLabel = document.createElement("label");
-                loadJsonLabel.textContent = "Load JSON: ";
-                const loadJsonInput = document.createElement("input");
-                loadJsonInput.type = "file";
-                loadJsonInput.id = "load-json-input";
-                loadJsonInput.accept = "application/json";
-                loadJsonInput.addEventListener("change", (e) => {
-                    const file = e.target.files[0];
-                    if (file) load_json(file);
-                });
-                loadJsonLabel.appendChild(loadJsonInput);
-                details.appendChild(loadJsonLabel);
-
-                const downloadPdfBtn = document.createElement("button");
-                downloadPdfBtn.textContent = "Download report";
-                downloadPdfBtn.addEventListener("click", download_pdf);
-                details.appendChild(downloadPdfBtn);
-
-                return details;
             }
 
             function render_header() {
                 const wrap = document.createElement("div");
-
-                const toggleBtn = document.createElement("button");
-                toggleBtn.type = "button";
-                toggleBtn.id = "sidebar-toggle";
-                toggleBtn.setAttribute("data-sidebar-toggle", "");
-                toggleBtn.setAttribute("aria-label", "Toggle navigation");
-                toggleBtn.setAttribute("aria-expanded", "false");
-                toggleBtn.textContent = "☰ Menu";
-                wrap.appendChild(toggleBtn);
-
-                const h1 = document.createElement("h1");
-                h1.textContent = "Open Science Infrastructure Assessment Tool";
-                wrap.appendChild(h1);
 
                 const intro = document.createElement("p");
                 intro.textContent = "Self-assess how your Open Science infrastructure puts open science values and principles into practice, against one or more community-recognised assessment frameworks.";
@@ -689,6 +884,11 @@
                 about.id = "about-section";
                 about.innerHTML = "<summary>About this tool</summary>" + ABOUT_TOOL_HTML;
                 wrap.appendChild(about);
+
+                const changelog = document.createElement("details");
+                changelog.id = "changelog-section";
+                changelog.innerHTML = "<summary>Changelog</summary>" + CHANGELOG_HTML;
+                wrap.appendChild(changelog);
 
                 return wrap;
             }
@@ -710,14 +910,15 @@
             function render_framework_section(framework) {
                 const section = document.createElement("section");
                 section.id = "framework-" + framework.id;
+                if (framework.draft) {
+                    const alertBox = document.createElement("div");
+                    alertBox.setAttribute("role", "alert");
+                    alertBox.setAttribute("data-variant", "warning");
+                    alertBox.textContent = "Draft – work in progress. This framework's principles and scoring criteria may still change.";
+                    section.appendChild(alertBox);
+                }
                 const h2 = document.createElement("h2");
                 h2.textContent = framework.title;
-                if (framework.draft) {
-                    const draftLabel = document.createElement("span");
-                    draftLabel.className = "draft-label";
-                    draftLabel.textContent = "Draft – work in progress";
-                    h2.appendChild(draftLabel);
-                }
                 section.appendChild(h2);
 
                 const desc = document.createElement("p");
@@ -855,6 +1056,7 @@
             function render_principle(principle, frameworkId) {
                 const details = document.createElement("details");
                 details.className = "container";
+                details.id = "principle-" + frameworkId + "-" + principle.id;
                 details.dataset.principleId = principle.id;
                 details.dataset.frameworkId = frameworkId;
 
@@ -948,11 +1150,6 @@
                         toggle_activity(e.target.value, e.target.checked);
                     }
                 });
-
-                document.getElementById("sidebar-toggle").addEventListener("click", (e) => {
-                    const isOpen = document.getElementById("app-shell").toggleAttribute("data-sidebar-open");
-                    e.currentTarget.setAttribute("aria-expanded", String(isOpen));
-                });
             }
 
             function toggle_activity(label, checked) {
@@ -971,35 +1168,40 @@
                     card.classList.toggle("selected", isSelected);
                     card.setAttribute("aria-pressed", isSelected ? "true" : "false");
                 });
+                update_principle_dot(frameworkId, principleId, state.frameworks[frameworkId][principleId].status);
                 update_summary();
                 update_badge();
             }
 
+            function update_principle_dot(frameworkId, principleId, status) {
+                const dot = document.getElementById("nav-dot-" + frameworkId + "-" + principleId);
+                if (dot) dot.dataset.status = status || "unanswered";
+            }
+
             function update_summary() {
-                FRAMEWORKS.forEach((framework) => {
+                all_frameworks().forEach((framework) => {
                     const summary = compute_summary(state, framework.id);
                     const heading = document.getElementById("summary-heading-" + framework.id);
                     const counts = document.getElementById("summary-counts-" + framework.id);
-                    if (!heading || !counts) return;
-                    heading.textContent = "Overall: " + summary.percentCompliant + "% compliant";
-                    counts.textContent =
-                        summary.compliant + " compliant · " + summary.progress + " making progress · " +
-                        summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+                    if (heading && counts) {
+                        heading.textContent = "Overall: " + summary.percentCompliant + "% compliant";
+                        counts.textContent =
+                            summary.compliant + " compliant · " + summary.progress + " making progress · " +
+                            summary.nonCompliant + " not compliant (" + summary.scoredCount + "/" + summary.totalCount + " scored)";
+                    }
+                    const tab = document.getElementById("tab-" + framework.id);
+                    if (tab) tab.textContent = tab_label_text(framework.id, framework.title);
                 });
             }
 
-            function download_json() {
-                const data = build_export_object(state);
+            function download_json_blob(data, filename) {
                 const json = JSON.stringify(data, null, 2);
                 const blob = new Blob([json], { type: "application/json" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "results.json";
-                link.style.display = "none";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(link.href), 0);
+                trigger_download(URL.createObjectURL(blob), filename);
+            }
+
+            function download_json() {
+                download_json_blob(build_export_object(state), "results.json");
             }
 
             function load_json(file) {
@@ -1018,10 +1220,90 @@
                 reader.readAsText(file);
             }
 
+            const FRAMEWORK_TEMPLATE = {
+                id: "my-framework",
+                title: "My Framework v1.0",
+                shortName: "MyFW",
+                description: "One-sentence summary of what this framework assesses.",
+                aboutHtml: "<p>Background on this framework: who created it, what it's based on, and how to cite it.</p>",
+                draft: true,
+                sections: [
+                    {
+                        section: "Example section",
+                        sourceUrl: "https://example.org/",
+                        principles: [
+                            {
+                                id: "example-principle",
+                                title: "Example principle title",
+                                text: "Describe what this principle asks the infrastructure to demonstrate.",
+                                criteria: {
+                                    compliant: "What full compliance looks like.",
+                                    progress: "What partial progress looks like.",
+                                    "non-compliant": "What non-compliance looks like.",
+                                },
+                                improvementAction: "A suggested action to move up the maturity scale.",
+                            },
+                        ],
+                    },
+                ],
+            };
+
+            function download_framework_template() {
+                download_json_blob(FRAMEWORK_TEMPLATE, "framework-template.json");
+            }
+
+            function download_custom_frameworks() {
+                download_json_blob(state.customFrameworks, "custom-frameworks.json");
+            }
+
+            function load_custom_frameworks(file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    let parsed;
+                    try {
+                        parsed = JSON.parse(reader.result);
+                    } catch (err) {
+                        alert("That file is not valid JSON.");
+                        return;
+                    }
+                    import_custom_frameworks(Array.isArray(parsed) ? parsed : [parsed]);
+                };
+                reader.readAsText(file);
+            }
+
+            function import_custom_frameworks(frameworks) {
+                const existingIds = all_frameworks().map((f) => f.id);
+                let addedCount = 0;
+                const skipped = [];
+                frameworks.forEach((framework) => {
+                    if (!validate_framework_shape(framework)) {
+                        skipped.push((framework && framework.id) || "(unrecognised)");
+                        return;
+                    }
+                    if (existingIds.includes(framework.id)) {
+                        skipped.push(framework.id + " (already exists)");
+                        return;
+                    }
+                    existingIds.push(framework.id);
+                    state.customFrameworks.push(framework);
+                    state.frameworks[framework.id] = framework_state_slice(framework);
+                    addedCount++;
+                });
+                if (addedCount > 0) render();
+                if (skipped.length > 0) {
+                    alert("Some frameworks could not be imported: " + skipped.join(", "));
+                } else if (addedCount === 0) {
+                    alert("No valid assessment framework found in that file.");
+                }
+            }
+
             function download_pdf() {
                 const detailsElements = Array.from(document.querySelectorAll("details"));
                 const openStates = detailsElements.map((el) => el.open);
                 detailsElements.forEach((el) => el.setAttribute("open", ""));
+                const tabpanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+                const tabpanelHiddenStates = tabpanels.map((el) => el.hidden);
+                tabpanels.forEach((el) => { el.hidden = false; });
                 document.body.classList.add("printing");
 
                 const doc = new jspdf.jsPDF();
@@ -1032,6 +1314,7 @@
                         detailsElements.forEach((el, i) => {
                             if (!openStates[i]) el.removeAttribute("open");
                         });
+                        tabpanels.forEach((el, i) => { el.hidden = tabpanelHiddenStates[i]; });
                     },
                     x: 10,
                     width: 200,
@@ -1040,11 +1323,15 @@
             }
 
             let detailsOpenBeforePrint = null;
+            let tabpanelsHiddenBeforePrint = null;
 
             window.addEventListener("beforeprint", () => {
                 const detailsElements = Array.from(document.querySelectorAll("details"));
                 detailsOpenBeforePrint = detailsElements.map((el) => el.open);
                 detailsElements.forEach((el) => el.setAttribute("open", ""));
+                const tabpanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+                tabpanelsHiddenBeforePrint = tabpanels.map((el) => el.hidden);
+                tabpanels.forEach((el) => { el.hidden = false; });
             });
 
             window.addEventListener("afterprint", () => {
@@ -1054,6 +1341,11 @@
                     if (!detailsOpenBeforePrint[i]) el.removeAttribute("open");
                 });
                 detailsOpenBeforePrint = null;
+                if (tabpanelsHiddenBeforePrint) {
+                    const tabpanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+                    tabpanels.forEach((el, i) => { el.hidden = tabpanelsHiddenBeforePrint[i]; });
+                    tabpanelsHiddenBeforePrint = null;
+                }
             });
 
             function ring_config_for(framework) {
@@ -1103,7 +1395,7 @@
                 const ringCenterY = 140;
                 const strokeWidth = 10;
                 let circles = "";
-                const framework = FRAMEWORKS.find((f) => f.id === activeFrameworkId);
+                const framework = all_frameworks().find((f) => f.id === activeFrameworkId);
                 ring_config_for(framework).forEach((ring) => {
                     const section = ring.section;
                     const offsets = ring_segment_offsets(ring.radius, section.principles.length);
@@ -1161,7 +1453,7 @@
             }
 
             function build_badge_hovercard_html(state) {
-                const framework = FRAMEWORKS.find((f) => f.id === activeFrameworkId);
+                const framework = all_frameworks().find((f) => f.id === activeFrameworkId);
                 const summary = compute_summary(state, framework.id);
                 const name = state.name || "Unnamed infrastructure";
                 let html = "<strong>" + escape_xml(name) + "</strong>";
@@ -1231,6 +1523,32 @@
                 document.getElementById("app-shell").removeAttribute("data-sidebar-open");
                 document.getElementById("sidebar-toggle").setAttribute("aria-expanded", "false");
             }, true);
+
+            document.getElementById("sidebar-toggle").addEventListener("click", (e) => {
+                const isOpen = document.getElementById("app-shell").toggleAttribute("data-sidebar-open");
+                e.currentTarget.setAttribute("aria-expanded", String(isOpen));
+            });
+
+            document.getElementById("import-report-input").addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (file) load_json(file);
+                e.target.value = "";
+            });
+            document.getElementById("import-framework-input").addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (file) load_custom_frameworks(file);
+                e.target.value = "";
+            });
+            document.getElementById("import-report-btn").addEventListener("click", () => {
+                document.getElementById("import-report-input").click();
+            });
+            document.getElementById("import-framework-btn").addEventListener("click", () => {
+                document.getElementById("import-framework-input").click();
+            });
+            document.getElementById("download-template-btn").addEventListener("click", download_framework_template);
+            document.getElementById("export-report-btn").addEventListener("click", download_json);
+            document.getElementById("print-report-btn").addEventListener("click", download_pdf);
+            document.getElementById("download-frameworks-btn").addEventListener("click", download_custom_frameworks);
 
             const appRoot = document.getElementById("app");
             appRoot.addEventListener("click", (e) => {
