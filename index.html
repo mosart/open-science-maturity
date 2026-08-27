@@ -34,63 +34,35 @@
                 font-family: var(--font-sans);
             }
 
-            /* The 20pt inset moves from body's margin onto #app here instead of
+            /* The inset moves from body's margin onto #app here instead of
                staying a body margin: [data-sidebar-layout]'s off-canvas math
                (translateX(-100%) on mobile) assumes the shell sits flush against
                the real viewport edge — a body margin leaves a sliver of the
                sidebar visible past that inset when it's supposed to be hidden. */
             #app-shell > main {
-                padding: 20pt;
+                padding: var(--space-8);
             }
 
-            h2 {
-                font-size: x-large;
-                margin-left: 20pt;
-                margin-bottom: 8pt;
+            /* Constrains line length on wide viewports instead of letting content
+               stretch edge-to-edge; #app is targeted directly (rather than adding
+               a .container class in JS) since it's a single fixed, known element. */
+            #app {
+                max-width: var(--container-max);
+                margin-inline: auto;
             }
 
             aside[data-sidebar] > header h2 {
-                font-size: medium;
+                font-size: var(--text-6);
                 font-weight: bold;
             }
 
-            h3 {
-                font-size: large;
-                margin-left: 20pt;
-                margin-bottom: 4pt;
-            }
-
-            h4 {
-                font-size: medium;
-                margin-bottom: 0pt;
-            }
-
-            section > p {
-                margin-left: 24pt;
-                margin-bottom: 6pt;
-            }
-
-            div.row {
-                padding-right: 24pt;
-            }
-
             section {
-                margin-top: 24pt;
-            }
-
-            summary {
-                padding: 10pt;
-            }
-
-            .status-cards {
-                display: flex;
-                gap: 8pt;
-                padding-right: 24pt;
+                margin-top: var(--space-10);
             }
 
             .status-card {
                 cursor: pointer;
-                border: 1pt solid transparent;
+                border: 2px solid transparent;
             }
 
             .status-card.selected[data-status="compliant"] { border-color: var(--compliant); }
@@ -103,59 +75,48 @@
             }
 
             .status-label {
-                margin: 4pt 0 0;
+                margin-block-start: var(--space-2);
                 font-weight: bold;
             }
 
             .status-criteria {
-                font-size: 8pt;
-                margin: 2pt 0 0;
+                font-size: var(--text-8);
+                margin-block-start: var(--space-1);
                 font-weight: normal;
             }
 
             .improvement-action {
-                margin-top: 6pt;
+                margin-top: var(--space-2);
                 font-style: italic;
             }
 
             textarea.notes {
                 width: 100%;
-                min-height: 40pt;
-                margin-top: 6pt;
+                min-height: 6rem;
+                margin-top: var(--space-2);
                 font-family: var(--font-sans);
             }
 
             .summary-section {
                 display: flex;
                 align-items: baseline;
-                gap: 24pt;
-                margin-left: 20pt;
+                gap: var(--space-6);
             }
 
             .summary-heading {
-                font-size: large;
+                font-size: var(--text-4);
                 font-weight: bold;
-            }
-
-            .classify-columns {
-                display: flex;
-                gap: 16pt;
-                flex-wrap: wrap;
-            }
-
-            .classify-column {
-                flex: 1 1 240pt;
             }
 
             .field {
                 display: block;
-                margin-bottom: 8pt;
+                margin-bottom: var(--space-4);
             }
 
             .field span {
                 display: block;
                 font-weight: bold;
-                margin-bottom: 2pt;
+                margin-bottom: var(--space-1);
             }
 
             .field input,
@@ -187,10 +148,10 @@
                 z-index: 10;
                 background: var(--card);
                 color: var(--foreground);
-                border: 1pt solid var(--border);
-                border-radius: 4pt;
-                padding: 8pt;
-                font-size: 9pt;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-medium);
+                padding: var(--space-3);
+                font-size: var(--text-8);
                 opacity: 0;
                 visibility: hidden;
                 transition: opacity 0.15s ease;
@@ -279,7 +240,7 @@
             .activity-icon {
                 display: inline-block;
                 vertical-align: middle;
-                margin-right: 4pt;
+                margin-right: var(--space-1);
                 color: var(--primary);
             }
 
@@ -785,8 +746,16 @@
 
                 section.appendChild(render_text_field("infra-name", "Infrastructure name", state.name, "text", "name of the infrastructure"));
                 section.appendChild(render_textarea_field("infra-description", "Description", state.description, "brief description of the infrastructure"));
-                section.appendChild(render_text_field("infra-url", "Landing page URL", state.url, "url", "https://..."));
-                section.appendChild(render_text_field("infra-assessed-on", "Assessment date", state.assessedOn, "date", ""));
+
+                const detailsRow = document.createElement("div");
+                detailsRow.className = "row";
+                const urlField = render_text_field("infra-url", "Landing page URL", state.url, "url", "https://...");
+                urlField.classList.add("col-6");
+                const dateField = render_text_field("infra-assessed-on", "Assessment date", state.assessedOn, "date", "");
+                dateField.classList.add("col-6");
+                detailsRow.appendChild(urlField);
+                detailsRow.appendChild(dateField);
+                section.appendChild(detailsRow);
 
                 const classifyHeading = document.createElement("h3");
                 classifyHeading.textContent = "Classify";
@@ -796,7 +765,7 @@
                 section.appendChild(classifyIntro);
 
                 const columns = document.createElement("div");
-                columns.className = "classify-columns";
+                columns.className = "row";
                 columns.appendChild(render_activities_column(ACTIVITIES.primary));
                 columns.appendChild(render_activities_column(ACTIVITIES.related));
                 section.appendChild(columns);
@@ -837,7 +806,7 @@
 
             function render_activities_column(group) {
                 const box = document.createElement("div");
-                box.className = "card classify-column";
+                box.className = "card col-6";
                 const h4 = document.createElement("h4");
                 h4.textContent = group.title;
                 box.appendChild(h4);
@@ -900,7 +869,7 @@
                 details.appendChild(text);
 
                 const cards = document.createElement("div");
-                cards.className = "status-cards";
+                cards.className = "row";
                 cards.setAttribute("role", "group");
                 cards.setAttribute("aria-label", principle.title + " maturity status");
                 [
@@ -909,7 +878,7 @@
                     { status: "non-compliant", label: "Not compliant" },
                 ].forEach((option) => {
                     const card = document.createElement("article");
-                    card.className = "card col-3 status-card";
+                    card.className = "card col-4 status-card";
                     card.dataset.status = option.status;
                     card.setAttribute("role", "button");
                     card.setAttribute("tabindex", "0");
