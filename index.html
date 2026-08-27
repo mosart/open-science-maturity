@@ -14,6 +14,7 @@
                 --compliant: rgba(13,148,136,1);
                 --font-sans: "Source Sans 3", sans-serif;
                 --focus-ring: var(--primary);
+                --sidebar-width: 18rem;
             }
             @media (prefers-color-scheme: dark) {
                 :root {
@@ -67,6 +68,18 @@
                 flex-direction: column;
                 align-items: flex-start;
                 text-align: left;
+                background-color: transparent;
+                color: var(--foreground);
+                border: none;
+                border-radius: 0;
+            }
+
+            #sidebar-nav {
+                font-size: var(--text-6);
+            }
+
+            #sidebar-nav a {
+                padding: var(--space-2) var(--space-3);
             }
 
             .menuitem-title {
@@ -1557,6 +1570,28 @@
             document.getElementById("export-report-btn").addEventListener("click", download_json);
             document.getElementById("print-report-btn").addEventListener("click", download_pdf);
             document.getElementById("download-frameworks-btn").addEventListener("click", download_custom_frameworks);
+
+            function position_popover(button, popover) {
+                const rect = button.getBoundingClientRect();
+                const gap = 4;
+                let left = rect.left;
+                const maxLeft = window.innerWidth - popover.offsetWidth - 8;
+                if (left > maxLeft) left = Math.max(8, rect.right - popover.offsetWidth);
+                popover.style.left = left + "px";
+                popover.style.top = (rect.bottom + gap) + "px";
+            }
+
+            document.querySelectorAll("ot-dropdown").forEach((dropdown) => {
+                const button = dropdown.querySelector("button[popovertarget]");
+                const popover = dropdown.querySelector("[popover]");
+                if (!button || !popover) return;
+                popover.addEventListener("toggle", (e) => {
+                    if (e.newState === "open") position_popover(button, popover);
+                });
+                popover.addEventListener("click", (e) => {
+                    if (e.target.closest('[role="menuitem"]')) popover.hidePopover();
+                });
+            });
 
             const appRoot = document.getElementById("app");
             appRoot.addEventListener("click", (e) => {
