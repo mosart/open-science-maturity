@@ -1,4 +1,4 @@
-# Open Science infrastructure maturity assessment
+# Open Science Infrastructure Self-Assessment Tool
 
 A self-assessment tool for Open Science infrastructures. Name your
 infrastructure, classify the activities it supports, and score it against
@@ -39,8 +39,13 @@ Two frameworks are included today:
 Open [`index.html`](index.html) directly in a browser, or serve the
 directory with any static file server. There is nothing to install or
 build — it's a single standalone HTML file. The top bar's Import/Export
-menus cover loading and saving a report or a custom framework by hand; the
-Changelog accordion (next to "About this tool") tracks what's changed.
+menus cover loading and saving a report or a custom framework by hand;
+"About" and "Changelog", also in the top bar, open as dialogs.
+
+[`examples/`](examples/) has three example POSI assessment reports based
+on published self-assessments from real infrastructures (OpenAIRE,
+OpenAlex, HAL+/CCSD) — also linked from the About dialog — that you can
+load via "Import Assessment Report".
 
 ### Loading via URL parameters
 

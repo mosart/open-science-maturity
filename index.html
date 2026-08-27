@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Open Science Infrastructure Self-Assessment Tool</title>
         <!-- <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css"> -->
         <link rel="stylesheet" href="oat.min.css">
         <style>
@@ -83,13 +84,13 @@
                 color: var(--muted-foreground);
             }
 
-            #changelog-section dt {
+            #changelog-dialog-content dt {
                 font-weight: var(--font-medium);
                 color: var(--muted-foreground);
                 margin-top: var(--space-3);
             }
 
-            #changelog-section dd {
+            #changelog-dialog-content dd {
                 margin-inline-start: 0;
                 margin-bottom: var(--space-2);
             }
@@ -338,11 +339,18 @@
             const ABOUT_TOOL_HTML =
                 "<p>This tool lets Open Science infrastructure providers, projects, funders, and programme teams reflect on and self-assess how open science values and principles are put into practice in an infrastructure’s design, governance, and operation.</p>" +
                 "<p>It grew out of the SPII project’s exploration of a shared self-assessment approach for open science infrastructures. Rather than building a bespoke framework from scratch, we chose to begin with an existing, community-governed framework — the <a href=\"https://openscholarlyinfrastructure.org/\">Principles of Open Scholarly Infrastructure (POSI)</a> — so infrastructures can assess themselves against criteria the wider community already recognises, and so results can be compared and shared. The tool is designed to support additional assessment frameworks over time, not just POSI.</p>" +
-                "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO’s Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>";
+                "<p>The underlying values — quality and integrity, collective benefit, and equity, fairness, diversity and inclusion — draw on UNESCO’s Open Science Recommendation and the Dutch National Plan Open Science (NPOS).</p>" +
+                "<p>Not sure where to start? These example POSI assessment reports are based on published self-assessments from real infrastructures — save one and load it via the Import menu’s “Import Assessment Report”:</p>" +
+                "<ul>" +
+                '<li><a href="examples/openaire-posi-assessment-report-2026.json">OpenAIRE (2026)</a></li>' +
+                '<li><a href="examples/openalex-posi-assessment-report-2026.json">OpenAlex (2026)</a></li>' +
+                '<li><a href="examples/hal-posi-assessment-report-2024.json">HAL+ / CCSD (2024)</a></li>' +
+                "</ul>" +
+                "<p>Source code: <a href=\"https://github.com/surf-ori/open-science-maturity\">github.com/surf-ori/open-science-maturity</a>. Built by Till Bey (SURF), Maurice Vanderfeesten, and Sander Bosch.</p>";
 
             const CHANGELOG_HTML =
                 "<dl>" +
-                '<dt>2026-08-27</dt><dd>Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status dot; a top bar with the app title and Import/Export menus. You can now import your own custom assessment framework (JSON) alongside POSI and SPII, download a template to help author one, and export whichever frameworks are currently loaded; a report and/or a custom framework can also be loaded automatically via <code>?report=</code>/<code>?framework=</code> URL parameters when the page is served over http(s).</dd>' +
+                '<dt>2026-08-27</dt><dd>Renamed to “Open Science Infrastructure Self-Assessment Tool” and moved to <a href="https://github.com/surf-ori/open-science-maturity">github.com/surf-ori/open-science-maturity</a>. Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status dot; a top bar with the app title and Import/Export menus, plus About and Changelog as dialogs instead of taking up space in the sidebar and main content. You can now import your own custom assessment framework (JSON) alongside POSI and SPII, download a template to help author one, and export whichever frameworks are currently loaded; a report and/or a custom framework can also be loaded automatically via <code>?report=</code>/<code>?framework=</code> URL parameters when the page is served over http(s). Added example POSI assessment reports based on real published self-assessments (OpenAIRE, OpenAlex, HAL+/CCSD), linked from the About dialog.</dd>' +
                 '<dt>2026-08-26</dt><dd>Redesigned sidebar navigation and assessment badge; added support for multiple assessment frameworks side by side, with SPII v0.0.1 (draft) alongside POSI; inline SVG icons for maturity levels and classification activities.</dd>' +
                 '<dt>2026-08-25</dt><dd>Rebuilt around the POSI v2.0 principles as a data-driven framework, with JSON export/reload and a downloadable assessment badge (SVG/PNG).</dd>' +
                 "<dt>2026-08-12</dt><dd>Relicensed under EUPL-1.2, with citation metadata added.</dd>" +
@@ -635,7 +643,7 @@
         <div data-sidebar-layout id="app-shell">
             <nav data-topnav>
                 <button type="button" id="sidebar-toggle" data-sidebar-toggle aria-label="Toggle navigation" aria-expanded="false">☰</button>
-                <strong>Open Science Infrastructure Assessment Tool</strong>
+                <strong>Open Science Infrastructure Self-Assessment Tool</strong>
                 <span class="topnav-spacer"></span>
                 <ot-dropdown>
                     <button type="button" popovertarget="import-menu">Import ▾</button>
@@ -668,9 +676,33 @@
                         </button>
                     </div>
                 </ot-dropdown>
+                <button type="button" class="ghost" commandfor="about-dialog" command="show-modal">About</button>
+                <button type="button" class="ghost" commandfor="changelog-dialog" command="show-modal">Changelog</button>
                 <input type="file" id="import-report-input" accept="application/json" hidden>
                 <input type="file" id="import-framework-input" accept="application/json" hidden>
             </nav>
+            <dialog id="about-dialog" closedby="any">
+                <form method="dialog">
+                    <header>
+                        <h3>About this tool</h3>
+                    </header>
+                    <div id="about-dialog-content"></div>
+                    <footer>
+                        <button type="button" class="outline" commandfor="about-dialog" command="close">Close</button>
+                    </footer>
+                </form>
+            </dialog>
+            <dialog id="changelog-dialog" closedby="any">
+                <form method="dialog">
+                    <header>
+                        <h3>Changelog</h3>
+                    </header>
+                    <div id="changelog-dialog-content"></div>
+                    <footer>
+                        <button type="button" class="outline" commandfor="changelog-dialog" command="close">Close</button>
+                    </footer>
+                </form>
+            </dialog>
             <aside data-sidebar>
                 <nav id="sidebar-nav"></nav>
                 <footer id="sidebar-footer"></footer>
@@ -781,8 +813,6 @@
                 nav.innerHTML = "";
                 const ul = document.createElement("ul");
 
-                ul.appendChild(render_nav_link("about-section", "About", null));
-                ul.appendChild(render_nav_link("changelog-section", "Changelog", null));
                 ul.appendChild(render_nav_link("infra-description-section", "OS Infrastructure Description", "infra-description"));
 
                 all_frameworks().forEach((framework) => {
@@ -892,16 +922,6 @@
                 const intro = document.createElement("p");
                 intro.textContent = "Self-assess how your Open Science infrastructure puts open science values and principles into practice, against one or more community-recognised assessment frameworks.";
                 wrap.appendChild(intro);
-
-                const about = document.createElement("details");
-                about.id = "about-section";
-                about.innerHTML = "<summary>About this tool</summary>" + ABOUT_TOOL_HTML;
-                wrap.appendChild(about);
-
-                const changelog = document.createElement("details");
-                changelog.id = "changelog-section";
-                changelog.innerHTML = "<summary>Changelog</summary>" + CHANGELOG_HTML;
-                wrap.appendChild(changelog);
 
                 return wrap;
             }
@@ -1585,6 +1605,9 @@
                 const isOpen = document.getElementById("app-shell").toggleAttribute("data-sidebar-open");
                 e.currentTarget.setAttribute("aria-expanded", String(isOpen));
             });
+
+            document.getElementById("about-dialog-content").innerHTML = ABOUT_TOOL_HTML;
+            document.getElementById("changelog-dialog-content").innerHTML = CHANGELOG_HTML;
 
             document.getElementById("import-report-input").addEventListener("change", (e) => {
                 const file = e.target.files[0];
