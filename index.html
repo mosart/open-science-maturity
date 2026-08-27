@@ -66,6 +66,13 @@
                 flex: 1;
             }
 
+            /* oat.min.css wraps its own [role=menuitem] rules (including its
+               :hover/:focus highlight) inside @layer components; unlayered
+               author styles always win over layered ones regardless of
+               specificity, so overriding background-color here — needed to
+               stop menu items looking like solid buttons — silently ate
+               Oat's own hover highlight too. Restating hover/focus here
+               keeps that highlight working. */
             [role="menuitem"] {
                 flex-direction: column;
                 align-items: flex-start;
@@ -74,6 +81,12 @@
                 color: var(--foreground);
                 border: none;
                 border-radius: 0;
+            }
+
+            [role="menuitem"]:hover,
+            [role="menuitem"]:focus {
+                background-color: var(--accent);
+                outline: none;
             }
 
             .menuitem-title {
@@ -359,7 +372,7 @@
 
             const CHANGELOG_HTML =
                 "<dl>" +
-                '<dt>2026-08-27</dt><dd>Renamed to “Open Science Infrastructure Self-Assessment Tool” and moved to <a href="https://github.com/surf-ori/open-science-maturity">github.com/surf-ori/open-science-maturity</a>, now also live at <a href="https://surf-ori.github.io/open-science-maturity/">surf-ori.github.io/open-science-maturity</a>. Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status icon; a top bar with the app title and Import/Export menus, plus About and Changelog as dialogs instead of taking up space in the sidebar and main content. You can now import your own custom assessment framework (JSON) alongside POSI and SPII, download a template to help author one, and export whichever frameworks are currently loaded; a report and/or a custom framework can also be loaded automatically via <code>?report=</code>/<code>?framework=</code> URL parameters when the page is served over http(s). Added example POSI assessment reports based on real published self-assessments (OpenAIRE, OpenAlex, HAL+/CCSD), one-click loadable from the About dialog. Author identifiers (ORCID) and affiliations (ROR) are now on record in <code>CITATION.cff</code> and credited in the About dialog.</dd>' +
+                '<dt>2026-08-27</dt><dd>Renamed to “Open Science Infrastructure Self-Assessment Tool” and moved to <a href="https://github.com/surf-ori/open-science-maturity">github.com/surf-ori/open-science-maturity</a>, now also live at <a href="https://surf-ori.github.io/open-science-maturity/">surf-ori.github.io/open-science-maturity</a>. Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status icon; a top bar with the app title and Import/Export menus, plus About and Changelog as dialogs instead of taking up space in the sidebar and main content. You can now import your own custom assessment framework (JSON) alongside POSI and SPII, download a template to help author one, and export whichever frameworks are currently loaded; a report and/or a custom framework can also be loaded automatically via <code>?report=</code>/<code>?framework=</code> URL parameters when the page is served over http(s). Added example POSI assessment reports based on real published self-assessments (OpenAIRE, OpenAlex, HAL+/CCSD), one-click loadable from the About dialog. Author identifiers (ORCID) and affiliations (ROR) are now on record in <code>CITATION.cff</code> and credited in the About dialog. Added the SURF logo to the top bar and as the favicon. Fixed the Import/Export menus to match Oat’s own dropdown behaviour (items now highlight on hover/focus, matching the component library) and gave the Export items the same description text as Import’s.</dd>' +
                 '<dt>2026-08-26</dt><dd>Redesigned sidebar navigation and assessment badge; added support for multiple assessment frameworks side by side, with SPII v0.0.1 (draft) alongside POSI; inline SVG icons for maturity levels and classification activities.</dd>' +
                 '<dt>2026-08-25</dt><dd>Rebuilt around the POSI v2.0 principles as a data-driven framework, with JSON export/reload and a downloadable assessment badge (SVG/PNG).</dd>' +
                 "<dt>2026-08-12</dt><dd>Relicensed under EUPL-1.2, with citation metadata added.</dd>" +
@@ -685,12 +698,15 @@
                     <div id="export-menu" popover role="menu">
                         <button type="button" role="menuitem" id="export-report-btn">
                             <span class="menuitem-title">Export Assessment Report (JSON)</span>
+                            <span class="menuitem-desc">Download your results to continue or share later</span>
                         </button>
                         <button type="button" role="menuitem" id="print-report-btn">
                             <span class="menuitem-title">Print Assessment Report (PDF)</span>
+                            <span class="menuitem-desc">Download a PDF report of the full assessment</span>
                         </button>
                         <button type="button" role="menuitem" id="download-frameworks-btn">
                             <span class="menuitem-title">Download Assessment Frameworks (JSON)</span>
+                            <span class="menuitem-desc">Download the frameworks currently loaded, including any custom ones</span>
                         </button>
                     </div>
                 </ot-dropdown>

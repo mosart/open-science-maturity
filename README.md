@@ -84,3 +84,4 @@ Copyright (c) 2026:
 
 Styling is provided by [Oat](https://oat.ink), layered with color and font
 tokens from the [SURF Design System](https://surfnet.github.io/DesignSystem/).
+The SURF logo in the top bar and favicon is [SURF](https://www.surf.nl/)'s own.
