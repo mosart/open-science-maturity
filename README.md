@@ -67,13 +67,18 @@ report and/or a custom framework automatically from query parameters:
 ## Citing
 
 If you use this tool, please cite it using the metadata in
-[`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository" button uses
-this automatically).
+[`CITATION.cff`](CITATION.cff) — including each author's ORCID and their
+affiliation's ROR identifier — which GitHub's "Cite this repository"
+button uses automatically.
 
 ## License
 
 Licensed under the [EUPL-1.2](LICENSE).
-Copyright (c) 2026 Till Bey, Maurice Vanderfeesten, and Sander Bosch.
+
+Copyright (c) 2026:
+- Till Bey ([ORCID](https://orcid.org/0000-0001-7509-9875)) — [SURF](https://ror.org/009vhk114)
+- Maurice Vanderfeesten ([ORCID](https://orcid.org/0000-0001-6397-4759)) — [Vrije Universiteit Amsterdam](https://ror.org/008xxew50) & [SURF](https://ror.org/009vhk114)
+- Sander Bosch ([ORCID](https://orcid.org/0000-0001-6845-0911)) — [Vrije Universiteit Amsterdam](https://ror.org/008xxew50)
 
 ## Credits
 
