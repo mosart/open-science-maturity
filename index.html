@@ -342,7 +342,7 @@
 
             const CHANGELOG_HTML =
                 "<dl>" +
-                '<dt>2026-08-27</dt><dd>Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status dot; a top bar with Import/Export menus, including support for importing your own custom assessment framework (JSON).</dd>' +
+                '<dt>2026-08-27</dt><dd>Visual refresh leaning on Oat’s own grid and type scale; main content moved into tabs (one per framework, showing a live scored/total count); sidebar navigation now lists every principle individually with a compliant/progress/non-compliant/unanswered status dot; a top bar with the app title and Import/Export menus. You can now import your own custom assessment framework (JSON) alongside POSI and SPII, download a template to help author one, and export whichever frameworks are currently loaded; a report and/or a custom framework can also be loaded automatically via <code>?report=</code>/<code>?framework=</code> URL parameters when the page is served over http(s).</dd>' +
                 '<dt>2026-08-26</dt><dd>Redesigned sidebar navigation and assessment badge; added support for multiple assessment frameworks side by side, with SPII v0.0.1 (draft) alongside POSI; inline SVG icons for maturity levels and classification activities.</dd>' +
                 '<dt>2026-08-25</dt><dd>Rebuilt around the POSI v2.0 principles as a data-driven framework, with JSON export/reload and a downloadable assessment badge (SVG/PNG).</dd>' +
                 "<dt>2026-08-12</dt><dd>Relicensed under EUPL-1.2, with citation metadata added.</dd>" +
@@ -581,8 +581,8 @@
                 };
             }
 
-            function merge_loaded_state(loaded) {
-                const fresh = initial_state();
+            function merge_loaded_state(loaded, base) {
+                const fresh = base || initial_state();
                 if (!loaded || typeof loaded !== "object") return fresh;
                 if (typeof loaded.name === "string") fresh.name = loaded.name;
                 if (typeof loaded.description === "string") fresh.description = loaded.description;
@@ -590,7 +590,7 @@
                 fresh.assessedOn = typeof loaded.assessedOn === "string" && /^\d{4}-\d{2}-\d{2}$/.test(loaded.assessedOn) ? loaded.assessedOn : today_iso_date();
                 if (Array.isArray(loaded.activities)) fresh.activities = loaded.activities.slice();
                 if (Array.isArray(loaded.customFrameworks)) {
-                    const knownIds = FRAMEWORKS.map((f) => f.id);
+                    const knownIds = FRAMEWORKS.map((f) => f.id).concat(fresh.customFrameworks.map((f) => f.id));
                     loaded.customFrameworks.forEach((framework) => {
                         if (!validate_framework_shape(framework) || knownIds.includes(framework.id)) return;
                         knownIds.push(framework.id);
@@ -1265,8 +1265,8 @@
                 download_json_blob(FRAMEWORK_TEMPLATE, "framework-template.json");
             }
 
-            function download_custom_frameworks() {
-                download_json_blob(state.customFrameworks, "custom-frameworks.json");
+            function download_all_frameworks() {
+                download_json_blob(all_frameworks(), "assessment-frameworks.json");
             }
 
             function load_custom_frameworks(file) {
@@ -1284,7 +1284,7 @@
                 reader.readAsText(file);
             }
 
-            function import_custom_frameworks(frameworks) {
+            function add_valid_frameworks(frameworks) {
                 const existingIds = all_frameworks().map((f) => f.id);
                 let addedCount = 0;
                 const skipped = [];
@@ -1302,12 +1302,56 @@
                     state.frameworks[framework.id] = framework_state_slice(framework);
                     addedCount++;
                 });
+                return { addedCount, skipped };
+            }
+
+            function import_custom_frameworks(frameworks) {
+                const { addedCount, skipped } = add_valid_frameworks(frameworks);
                 if (addedCount > 0) render();
                 if (skipped.length > 0) {
                     alert("Some frameworks could not be imported: " + skipped.join(", "));
                 } else if (addedCount === 0) {
                     alert("No valid assessment framework found in that file.");
                 }
+            }
+
+            function fetch_json_url(url, label) {
+                return fetch(url)
+                    .then((response) => {
+                        if (!response.ok) throw new Error("HTTP " + response.status);
+                        return response.json();
+                    })
+                    .catch((err) => {
+                        alert('Could not load ' + label + ' from "' + url + '": ' + err.message);
+                        return null;
+                    });
+            }
+
+            function load_from_url_params() {
+                const params = new URLSearchParams(window.location.search);
+                const frameworkUrl = params.get("framework");
+                const reportUrl = params.get("report");
+                if (!frameworkUrl && !reportUrl) return;
+
+                Promise.all([
+                    frameworkUrl ? fetch_json_url(frameworkUrl, "framework") : Promise.resolve(null),
+                    reportUrl ? fetch_json_url(reportUrl, "report") : Promise.resolve(null),
+                ]).then(([frameworkData, reportData]) => {
+                    let changed = false;
+                    if (frameworkData) {
+                        const frameworksToAdd = Array.isArray(frameworkData) ? frameworkData : [frameworkData];
+                        const { addedCount, skipped } = add_valid_frameworks(frameworksToAdd);
+                        if (addedCount > 0) changed = true;
+                        if (skipped.length > 0) {
+                            alert("Some frameworks from the URL could not be loaded: " + skipped.join(", "));
+                        }
+                    }
+                    if (reportData) {
+                        state = merge_loaded_state(reportData, state);
+                        changed = true;
+                    }
+                    if (changed) render();
+                });
             }
 
             function download_pdf() {
@@ -1561,7 +1605,7 @@
             document.getElementById("download-template-btn").addEventListener("click", download_framework_template);
             document.getElementById("export-report-btn").addEventListener("click", download_json);
             document.getElementById("print-report-btn").addEventListener("click", download_pdf);
-            document.getElementById("download-frameworks-btn").addEventListener("click", download_custom_frameworks);
+            document.getElementById("download-frameworks-btn").addEventListener("click", download_all_frameworks);
 
             function position_popover(button, popover) {
                 const rect = button.getBoundingClientRect();
@@ -1608,6 +1652,7 @@
             });
 
             render();
+            load_from_url_params();
         </script>
     </body>
 </html>
