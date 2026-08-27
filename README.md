@@ -20,7 +20,7 @@ Two frameworks are included today:
   its own icon.
 - **Score** — rate every principle of the selected framework(s), one tab
   per framework, with a live-updating scored/total count in the tab label
-  and a colored status dot (compliant / making progress / not compliant /
+  and a status icon (compliant / making progress / not compliant /
   unanswered) next to every principle in the sidebar navigation, so you can
   see progress at a glance without opening each section.
 - **Bring your own framework** — import a custom assessment framework
