@@ -8,7 +8,7 @@ A self-assessment tool for Open Science infrastructures, currently offering two 
 
 ## Running / previewing
 
-Just open `index.html` directly in a browser (or serve the directory with any static file server). There is nothing to install or build.
+Just open `index.html` directly in a browser (or serve the directory with any static file server). There is nothing to install or build. Also live at https://surf-ori.github.io/open-science-maturity/ via GitHub Pages (legacy build, serving `main` branch root — no workflow file, no separate deploy step; a push to `main` is a deploy). The `?report=`/`?framework=` URL-param loader needs this http(s) form — it won't work on a `file://`-opened copy.
 
 ## Architecture
 

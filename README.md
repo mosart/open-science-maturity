@@ -36,16 +36,19 @@ Two frameworks are included today:
 
 ## Usage
 
-Open [`index.html`](index.html) directly in a browser, or serve the
-directory with any static file server. There is nothing to install or
+Also live at **[surf-ori.github.io/open-science-maturity](https://surf-ori.github.io/open-science-maturity/)**
+(GitHub Pages, served from this repo's `main` branch — no separate deploy
+step). Or open [`index.html`](index.html) directly in a browser, or serve
+the directory with any static file server; there is nothing to install or
 build — it's a single standalone HTML file. The top bar's Import/Export
 menus cover loading and saving a report or a custom framework by hand;
 "About" and "Changelog", also in the top bar, open as dialogs.
 
 [`examples/`](examples/) has three example POSI assessment reports based
 on published self-assessments from real infrastructures (OpenAIRE,
-OpenAlex, HAL+/CCSD) — also linked from the About dialog — that you can
-load via "Import Assessment Report".
+OpenAlex, HAL+/CCSD) — linked from the About dialog as one-click loads
+against the live site (see below), or load one by hand via "Import
+Assessment Report".
 
 ### Loading via URL parameters
 
